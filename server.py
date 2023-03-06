@@ -1,6 +1,7 @@
 from socket import *
 import pickle
 import time
+import os
 import threading
 
 class SocketThread(threading.Thread):
@@ -21,22 +22,22 @@ class SocketThread(threading.Thread):
 
 			if received_data != None:
 				# create local file
-				if "pth" in received_data:
-					self.filename = received_data #save received filename
-					msg = "Server received file: {file}.".format(file=self.filename)
-					self.filename = str(client_info[1])+'_'+self.filename
-					msg = pickle.dumps(msg)
-					connection.sendall(msg)
-					print('Server sent filename confirmation to client')
-	
+				port_num = client_info[1]
+				filename = str(port_num) + "_model.pth"
+
+				# rename file if already exists
+				while(os.path.exists(os.getcwd()+filename)):
+					port_num += 1
+					filename = str(port_num) + "_model.pth"
+
 				# write received data to file
-				elif self.filename:
-					with open(self.filename, 'w') as f:
-						f.writelines(received_data)
-					msg = "Server received file data."
-					msg = pickle.dumps(msg)
-					connection.sendall(msg)
-					print('Server sent file data confirmation to client')
+				with open(filename, 'w') as f:
+					f.writelines(received_data)
+
+				msg = "Server received model data"
+				msg = pickle.dumps(msg)
+				connection.sendall(msg)
+				print('Server sent model data confirmation to client')
 
 			if status == 0:
 				self.connection.close()

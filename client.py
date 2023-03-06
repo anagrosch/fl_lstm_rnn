@@ -2,19 +2,6 @@ from socket import *
 import sys
 import pickle
 
-def sendData(socket, msg):
-	msg = pickle.dumps(msg)
-	socket.sendall(msg)
-	print('Client sent message to the server')
-
-	received_data = b''
-	while str(received_data)[-2] != '.':
-		data = clientSocket.recv(8)
-		received_data += data
-
-	return pickle.loads(received_data)
-
-
 serverIP = "192.168.1.60"
 serverPort = 10800
 
@@ -26,12 +13,17 @@ clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
 clientSocket.connect((serverIP, serverPort))
 print('Connected to server')
 
-# Send filename to server
-received_data = sendData(clientSocket, filename)
-print("Received status from server: {data}".format(data=received_data))
+# Send model data to server
+data = pickle.dumps(data)
+clientSocket.sendall(data)
+print('Client sent model data to the server')
 
-# Send file data to server
-received_data = sendData(clientSocket, data)
+received_data = b''
+while str(received_data)[-2] != '.':
+	data = clientSocket.recv(8)
+	received_data += data
+
+received_data = pickle.loads(received_data)
 print("Received status from server: {data}".format(data=received_data))
 
 clientSocket.close()
