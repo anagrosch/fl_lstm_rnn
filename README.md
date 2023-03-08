@@ -1,42 +1,15 @@
 # Federated Learning Implementation of LSTM RNN
 
-Send client models to central server with IPv4 TCP sockets.
+Clients send trained model parameters to central server.
+The central server aggregates the data, then sends the
+aggregated results to each client.
+Communication done with IPv4 TCP sockets.
 
-## Project Files
+## Project Organization
 
-This project has the following files:
+The central server files are located in the `server_side` folder.
 
-- `server.py`: Central server app to create `pth` files with models
-received from each client. Must be executed before all clients.
+The client side files are located in the `client_side` folder.
 
-- `client.py`: Client app to send client's trained model to the central
-server. Can be used by each client.
-
-## Usage
-
-### Server Side
-
-When a connection is established between the central server and client(s), server
-creates a file named `<client_port>_model.pth` for each client. If the file already
-exists, the client_port is incremented by 1.
-
-The trained model received by each client is saved to the client's respective file.
-
-Supports multithreading.
-
-Must change `serverIP` to IP address or hostname of server.
-
-To execute, run command:
-```
-python3 server.py
-```
-
-### Client Side
-
-Client sends its trained model to central server.
-
-To execute, run command:
-```
-python3 client.py <model>.pth
-```
-where `<model>.pth` is the local file with the client's trained model information.
+Client must add the full model files to the same location as the
+TCP socket file.
