@@ -20,6 +20,8 @@ dictionary. Sends dictionary to the central server.
 Waits to receive aggregated results from the central server. Saves results
 to `outputs/best_model_params.pkl`.
 
+This file must be in the same location as the client's model.
+
 To execute, run command:
 ```
 python3 client_socket.py
