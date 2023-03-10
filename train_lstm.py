@@ -126,7 +126,6 @@ def predict(dataset, model, optimizer, text, next_words):
 	return ' '.join([str(char) for char in words])	#convert list to string
 
 # main function
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-me', '--max-epochs', type=int, default=100)
 parser.add_argument('-bs', '--batch-size', type=int, default=256)
@@ -152,10 +151,12 @@ try:
 except:
 	print('Cannot load best model. Continuing with untrained model.')
 
+# train model
 if args.train:
 	train_and_save(train_data, valid_data, model, optimizer, args)
 	save_params(model, optimizer)
 
+# run model for prediction
 if args.predict: 
 	print(predict(train_data, model, optimizer, text=args.predict_text, next_words=args.predict_size))
 
