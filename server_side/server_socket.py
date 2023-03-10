@@ -8,7 +8,7 @@ model_dir = join(os.getcwd(), "client_models")
 
 class SocketThread(threading.Thread):
 	"""
-	Class for multithreading TCP socket
+	Class for multithreading TCP socket.
 	"""
 	def __init__(self, connection, client_info, buffer_size=1024, recv_timeout=5):
 		threading.Thread.__init__(self)
@@ -39,16 +39,12 @@ class SocketThread(threading.Thread):
 			if received_data != None:
 				# write received data to file
 				f.write(received_data)
+
 				print("Received chunk {num} from client".format(num=param_count))
-				"""
-				msg = "Server received chunk {num}".format(num=param_count)
-				msg = pickle.dumps(msg)
-				self.connection.sendall(msg)
-				print('Server sent data confirmation to client')
-				"""
 				param_count += 1
 
 			if status == 0:
+				f.close()
 				self.connection.close()
 				print("Connection closed with {client} due to inactivity or error.".format(client=self.client_info))
 				break
@@ -92,8 +88,21 @@ def server_get():
 	"""
 	Function to get client weights with a TCP socket
 	"""
+	print('------------------------------------------')
+	print('Waiting for model parameters from clients.')
+	print('------------------------------------------')
+
 	server_ip = "192.168.1.60"
 	server_port = 10800
+	info_path = join(model_dir, "client_info.pkl")
+
+	# create directory to save models to
+	if not exists(model_dir):
+		os.mkdir(model_dir)
+		print("Client model directory created.")
+
+	# create dictionary to hold client info
+	addr_dict = {}
 
 	serverSocket = socket(AF_INET,SOCK_STREAM)
 	serverSocket.bind((server_ip,server_port))
@@ -107,10 +116,7 @@ def server_get():
 			connection, client_info = serverSocket.accept()
 			print("New connection from client: {client_info}".format(client_info=client_info))
 
-			# create directory to save models to
-			if not exists(model_dir):
-				os.mkdir(model_dir)
-				print("Client model directory created.")
+			addr_dict[client_info[0]] = client_info[1]
 
 			socket_thread = SocketThread(connection=connection,
 						     client_info=client_info,
@@ -123,49 +129,55 @@ def server_get():
 			print('Socket closed. Server received no connections')
 			break
 
+	# write client info dictionary to file
+	with open(info_path, 'wb') as f:
+		pickle.dump(addr_dict, f)
+	print("Client addresses saved to file: {path}".format(path=info_path))
 
-def server_send(addr_dict, weight_path):
+
+def server_send(weight_path):
 	"""
 	Function to send aggregated weights to clients.
 	"""
+	print('')
+	print('--------------------------------------')
+	print('Sending aggregated results to clients.')
+	print('--------------------------------------')
+
+	buffer_size = 1024
+	client_port = 12000
+	info_path = join(model_dir, "client_info.pkl")
+
+	# get client addresses
+	with open(info_path, 'rb') as f:
+		addr_dict = pickle.load(f)
+
 	# iterate through each client address
-	for ip, port in addr_dict.items():
-		socket = socket(AF_INET, SOCK_STREAM)
-		socket.connect((ip, port))
-		print("Connected to client: ({ip}, {port})".format(ip=ip, port=port))
+	for ip in addr_dict.keys():
+		soc = socket(AF_INET, SOCK_STREAM)
+		soc.connect((ip, client_port))
+		print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
 
-		# send weights to client
-		data = get_dict(join(os.getcwd(), "final_weights.pkl"))
-		data = pickle.dumps(data)
-		socket.sendall(data)
-		print("Server send weights to client: ({ip}, {port})".format(ip=ip, port=port))
+		# send weights to client in chunks
+		send_chunks(soc, join(os.getcwd(), "final_weights.pkl"))
+		print("Server send weights to client: ({ip}, {port})".format(ip=ip, port=client_port))
 
-		# get client confirmation
-		received_data = b''
-		while str(received_data)[-2] != '.':
-			data = socket.recv(8)
-			received_data += data
-
-		received_data = pickle.loads(received_data)
-		print("Received status from client: {data}".format(data=received_data))
-
-		socket.close()
-		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=port))
+		soc.close()
+		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=client_port))
 
 	print('Aggregated weights sent to all clients')
 
 
-def get_dict(file_path):
+def send_chunks(soc, path):
 	"""
-	Function to get parameter dictionary from a file.
+	Function to split pickle file into chunks and send to clients.
 	"""
-	if not is_file(file_path):
-		dict = {}
-	else:
-		with open(file_path, 'rb') as f:
-			dict = pickle.load(f)
-	return dict
+	buffer_size = 1024
+	f = open(path, 'rb')
+	while True:
+		chunk = f.read(buffer_size)
+		if not chunk:
+			f.close()
+			break
+		soc.sendall(chunk)
 
-
-if __name__ == "__main__":
-	server_socket()

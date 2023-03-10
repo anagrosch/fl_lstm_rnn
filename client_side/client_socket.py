@@ -1,14 +1,85 @@
 import os
+import time
 import pickle
 from socket import *
 
 param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
+
+class ClientSocket:
+	"""
+	Class for client TCP socket receiving aggregated weights from server.
+	"""
+	def __init__(self, connection, server_info, buffer_size=1024, recv_timeout=5):
+		self.connection = connection
+		self.server_info = server_info
+		self.buffer_size = buffer_size
+		self.recv_timeout = recv_timeout
+
+	def run(self):
+		"""
+		Function to get aggregated weights and update parameter file.
+		"""
+		f = open(param_path, 'wb')
+		count = 0
+		while True:
+			self.start_time = time.time()
+			received_data, status = self.recv_data()
+
+			if received_data != None:
+				f.write(received_data)
+				print("Received chunk {num} from server.".format(num=count))
+				count += 1
+
+			if status == 0:
+				f.close()
+				print('Aggregated results saved to best_model_params.pkl')
+
+				self.connection.close()
+				print("Connection closed with {server} due to inactivity or error.".format(server=self.server_info))
+				break
+
+
+	def recv_data(self):
+		"""
+		Function to call recv() until all data received from server.
+		"""
+		received_data = b''
+		while True:
+			try:
+				data = self.connection.recv(self.buffer_size)
+				received_data += data
+
+				if data == b'':
+					received_data = b''
+				
+					if (time.time() - self.start_time) > self.recv_timeout:
+						return None, 0 #connection inactive
+
+				elif str(data)[-2] == '.':
+					if len(received_data) > 0:
+						try:
+							return received_data, 1
+
+						except BaseException as e:
+							print("Error decoding client data: {msg}.\n".format(msg=e))
+							return None, 0
+
+				else: self.start_time = time.time() #reset timeout counter
+	
+			except BaseException as e:
+				print("Error receiving data: {msg}.\n".format(msg=e))
+				return None, 0
+
 
 def client_send(server_port=10800, server_ip="192.168.1.60"):
 	"""
 	Function to send trained model and receive updated weights with
 	TCP socket.
 	"""
+	print('-------------------------------------------------')
+	print('Sending local model parameters to central server.')
+	print('-------------------------------------------------')
+
 	client_ip = "192.168.1.60" #change with machine's public ip address
 	client_port = 12000
 
@@ -43,9 +114,12 @@ def client_get():
 	"""
 	Function to get aggregated weights from server.
 	"""
-	server_ip = "192.168.1.60"
-	server_port = 10800
+	print('')
+	print('---------------------------------------------------')
+	print('Waiting for aggregated results from central server.')
+	print('---------------------------------------------------')
 
+	server_ip = "192.168.1.60"
 	client_ip = "192.168.1.60" #change to machine's ip
 	client_port = 12000
 
@@ -59,21 +133,15 @@ def client_get():
 	while True:
 		try:
 			connection, address = soc.accept()
-			if address is (server_ip, server_port):
+			if address[0] == server_ip:
 				print("Accepted connection from server: {addr}".format(addr=address))
-			
-				received_data = b''
-				while str(received_data)[-2] != '.':
-					data = soc.recv(8)
-					received_data += data
 
-				received_data = pickle.loads(received_data)
-				print('Received aggregated results from server.')
+				client = ClientSocket(connection=connection,
+						      server_info=address,
+						      buffer_size=1024,
+						      recv_timeout=10)
+				client.run()
 
-				with open(param_path, 'wb') as f:
-					pickle.dump(received_data, f)
-				print('Aggregated results saved to best_model_params.pkl')
-	
 			else:
 				print("Rejected connection from server: {addr}".format(addr=address))
 
@@ -85,6 +153,7 @@ def client_get():
 
 # send trained model parameters to central server
 client_send()
+time.sleep(1)
 
 # get aggregated results from server and update model parameters
-#client_get()
+client_get()

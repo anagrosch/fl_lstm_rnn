@@ -1,12 +1,13 @@
 import os
+import time
 import pickle
 import shutil
 from os.path import join, isfile, exists
-from server_socket import server_get, server_send, get_dict
+from server_socket import server_get, server_send
 
 final_weights = join(os.getcwd(), "final_weights.pkl")
 
-def get_params(path):
+def aggr_params(path):
 	"""
 	Function to get parameters from each client file.
 	"""
@@ -26,17 +27,9 @@ def get_params(path):
 			file_count += 1
 
 	tmp_dict = {}
-	addr_dict = {}
 	for file in os.listdir(param_dir):
 		if file.endswith('.pkl'):
 			tmp_dict = get_dict(join(param_dir, file))
-
-			# get client address from dictionary
-			ip = tmp_dict.keys()[-1]
-			addr_dict[ip] = tmp_dict[ip]
-
-			# delete client address from dictionary
-			tmp_dict.pop(ip)
 
 			# aggregate params
 			for weight in tmp_dict.keys():
@@ -55,14 +48,27 @@ def get_params(path):
 	except:
 		raise Exception("Error deleting client_models directory")
 
-	return addr_dict
+
+def get_dict(file_path):
+	"""
+	Function to get parameter dictionary from a file.
+	"""
+	if not is_file(file_path):
+		dict = {}
+	else:
+		with open(file_path, 'rb') as f:
+			dict = pickle.load(f)
+	return dict
 
 
 # get trained models from clients
 server_get()
+time.sleep(1)
 
 # aggregate weights
-#addr_dict = get_params()
+#aggr_params()
+#time.sleep(1)
 
 # send aggregated weights
-#server_send(addr_dict, final_weights)
+server_send(final_weights)
+time.sleep(1)
