@@ -94,7 +94,7 @@ def server_get():
 
 	server_ip = "192.168.1.60"
 	server_port = 10800
-	info_path = join(model_dir, "client_info.pkl")
+	info_path = join(os.getcwd(), "client_info.pkl")
 
 	# create directory to save models to
 	if not exists(model_dir):

@@ -1,5 +1,6 @@
 import os
 import time
+import argparse
 import pickle
 import shutil
 from os.path import join, isfile, exists
@@ -61,14 +62,28 @@ def get_dict(file_path):
 	return dict
 
 
+# main function
+parser = argparse.ArgumentParser()
+parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from clients')
+parser.add_argument('-a', '--aggr', action='store_true', help='aggregate client weights')
+parser.add_argument('-s', '--send', action='store_true', help='send aggregated results to clients')
+args = parser.parse_args()
+
 # get trained models from clients
-server_get()
-time.sleep(1)
+if args.get:
+	server_get()
+	time.sleep(1)
 
 # aggregate weights
-#aggr_params()
-#time.sleep(1)
+if args.aggr:
+	aggr_params() #note: aggregation untested
+	time.sleep(1)
 
 # send aggregated weights
-server_send(final_weights)
-time.sleep(1)
+if args.send:
+	server_send(final_weights)
+	time.sleep(1)
+
+if not(args.get or args.aggr or args.send):
+	print('Error: No action chosen')
+	print('<python3 aggregate.py --help> for help')

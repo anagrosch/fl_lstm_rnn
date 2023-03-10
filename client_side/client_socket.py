@@ -1,6 +1,7 @@
 import os
 import time
 import pickle
+import argparse
 from socket import *
 
 param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
@@ -110,7 +111,7 @@ def send_chunks(soc, path):
 		soc.sendall(chunk)
 
 
-def client_get():
+def client_get(server_ip="192.168.1.60"):
 	"""
 	Function to get aggregated weights from server.
 	"""
@@ -119,7 +120,6 @@ def client_get():
 	print('Waiting for aggregated results from central server.')
 	print('---------------------------------------------------')
 
-	server_ip = "192.168.1.60"
 	client_ip = "192.168.1.60" #change to machine's ip
 	client_port = 12000
 
@@ -151,9 +151,21 @@ def client_get():
 			break
 
 
+# main function
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
+parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')
+args = parser.parse_args()
+
 # send trained model parameters to central server
-client_send()
-time.sleep(1)
+if args.send:
+	client_send()
+	time.sleep(1)
 
 # get aggregated results from server and update model parameters
-client_get()
+if args.get:
+	client_get()
+
+if not(args.send or args.get):
+	print('Error: No action chosen')
+	print('<python3 client_socket.py --help> for help')

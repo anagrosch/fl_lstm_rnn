@@ -19,6 +19,8 @@ each client's parameters and redistribute the aggregates results.
 
 ### Socket Program
 
+#### Get Client Parameters
+
 When a connection is established between the central server and client(s),
 the server creates a file named `<client_port>_model.pkl` for each client.
 If the file already exists, the `client_port` is incremented by 1.
@@ -28,28 +30,46 @@ respective file.
 
 Client files are saved to `/client_models/`.
 
-Gets aggregated results from local file `final_weights.pkl` and sends the
-data to each client address provided in a dictionary.
+The IP addresses of each client are saved to `/client_models/client_info.pkl`
+as a Python dictionary.
 
 Supports multithreading.
+
+To execute, run command:
+```
+python3 aggregate.py --get
+```
+or
+```
+python3 aggregate.py -g
+```
+
+#### Redistribute Aggregated Results to Clients
+
+Gets aggregated results from local file `final_weights.pkl` and sends the
+data to each client address provided in local file `client_info.pkl`.
 
 Must change `server_ip` to IP address or hostname of server.
 
 ### Aggregation Program
 
-Calls `server_socket.py` to get model parameters from each client.
+Reads each client's parameters from client files located in `/client_models/`.
+Aggregates new client parameters.
 
-Gets each client's parameters from `.pkl` files in the `client_models`
-directory. Aggregates the parameters and saves the final results to
-`final_weights.pkl`.
+If there are weights saved in local file `final_weights.pkl` from a
+previous round of aggregation, the weights are aggregated with the
+new client weights.
 
-Gets each client's IP address and port number from each client's
-parameter file. Calls `server_socket.py` to send aggregated results
-to each client.
+Final aggregated results saved to `final_weights.pkl`.
 
-Deletes client files after aggregation.
+The `/client_models/` directory with the client weights is deleted
+after aggregation.
 
 To execute, run command:
 ```
-python3 aggregate.py
+python3 aggregate.py --aggr
+```
+or
+```
+python3 aggregate.py -a
 ```
