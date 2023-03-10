@@ -2,7 +2,7 @@ import os
 import pickle
 import shutil
 from os.path import join, isfile, exists
-from server import server_get, server_send
+from server_socket import server_get, server_send, get_dict
 
 final_weights = join(os.getcwd(), "final_weights.pkl")
 
@@ -58,23 +58,11 @@ def get_params(path):
 	return addr_dict
 
 
-def get_dict(file_path):
-	"""
-	Function to get parameter dictionary from a file.
-	"""
-	if not is_file(file_path):
-		dict = {}
-	else:
-		with open(file_path, 'rb') as f:
-			dict = pickle.load(f)
-	return dict
-	
-
 # get trained models from clients
 server_get()
 
 # aggregate weights
-addr_dict = get_params()
+#addr_dict = get_params()
 
 # send aggregated weights
-server_send(addr_dict, final_weights)
+#server_send(addr_dict, final_weights)

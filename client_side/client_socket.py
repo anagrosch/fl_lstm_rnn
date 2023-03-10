@@ -1,8 +1,6 @@
 import os
 import pickle
 from socket import *
-from lstm_model import Model
-from utils import get_params
 
 param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
 
@@ -11,42 +9,34 @@ def client_send(server_port=10800, server_ip="192.168.1.60"):
 	Function to send trained model and receive updated weights with
 	TCP socket.
 	"""
-	data = add_addr_to_dict()
+	client_ip = "192.168.1.60" #change with machine's public ip address
+	client_port = 12000
 
 	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
 	clientSocket.connect((server_ip, server_port))
 	print('Connected to server')
 
-	# Send model data to server
-	data = pickle.dumps(data)
-	clientSocket.sendall(data)
-	print('Client sent model parameters to the server')
-
-	received_data = b''
-	while str(received_data)[-2] != '.':
-		data = clientSocket.recv(8)
-		received_data += data
-
-	received_data = pickle.loads(received_data)
-	print("Received status from server: {data}".format(data=received_data))
+	# send weights from each parameter file
+	send_chunks(clientSocket, param_path)
+	print('Client sent model parameters to the server.')
 
 	clientSocket.close()
 	print('Client socket closed')
 
 
-def add_addr_to_dict():
+def send_chunks(soc, path):
 	"""
-	Function to get weight dictionary from file and add client's address
-	to the dictionary. Returns dictionary.
+	Function to split pickle files into chunks and send to server socket.
 	"""
-	client_port = 12000
-	client_ip = ""
-
-	with open(param_path, 'rb') as f:
-		dict = pickle.load(f)
-
-	dict[client_ip] = client_port
-	return dict
+	buffer_size = 1024
+	f = open(path,'rb')
+	while True:
+		# send chunk to server
+		chunk = f.read(buffer_size)
+		if not chunk:
+			f.close()
+			break
+		soc.sendall(chunk)
 
 
 def client_get():
@@ -69,11 +59,11 @@ def client_get():
 	while True:
 		try:
 			connection, address = soc.accept()
-			if address = (server_ip, server_port):
+			if address is (server_ip, server_port):
 				print("Accepted connection from server: {addr}".format(addr=address))
 			
 				received_data = b''
-				while str(received_data0[-2] != '.':
+				while str(received_data)[-2] != '.':
 					data = soc.recv(8)
 					received_data += data
 
@@ -97,4 +87,4 @@ def client_get():
 client_send()
 
 # get aggregated results from server and update model parameters
-client_get()
+#client_get()

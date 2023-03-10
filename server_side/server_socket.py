@@ -3,7 +3,6 @@ import pickle
 import threading
 from socket import *
 from os.path import join, exists
-from aggregate import get_dict
 
 model_dir = join(os.getcwd(), "client_models")
 
@@ -19,31 +18,35 @@ class SocketThread(threading.Thread):
 		self.recv_timeout = recv_timeout
 
 	def run(self):
-	"""
-	Function to get client weights and create local files for each client
-	"""
+		"""
+		Function to get client weights and create local files for each client
+		"""
+		# create local file
+		port_num = self.client_info[1]
+		file_path = join(model_dir,str(port_num)+"_model.pkl")
+
+		# rename file if already exists
+		while(exists(file_path)):
+			port_num += 1
+			file_path = join(model_dir,str(port_num)+"_model.pkl")
+
+		f = open(file_path, 'wb')
+		param_count = 0
 		while True:
 			self.start_time = time.time()
 			received_data, status = self.recv_data()
 
 			if received_data != None:
-				# create local file
-				port_num = self.client_info[1]
-				file_path = join(model_dir,str(port_num)+"_model.pkl")
-
-				# rename file if already exists
-				while(exists(file_path)):
-					port_num += 1
-					file_path = join(model_dir,str(port_num)+"_model.pkl")
-
 				# write received data to file
-				with open(file_path, 'wb') as f:
-					pickle.dump(received_data, f)
-
-				msg = "Server received model data"
+				f.write(received_data)
+				print("Received chunk {num} from client".format(num=param_count))
+				"""
+				msg = "Server received chunk {num}".format(num=param_count)
 				msg = pickle.dumps(msg)
 				self.connection.sendall(msg)
-				print('Server sent model data confirmation to client')
+				print('Server sent data confirmation to client')
+				"""
+				param_count += 1
 
 			if status == 0:
 				self.connection.close()
@@ -70,11 +73,8 @@ class SocketThread(threading.Thread):
 						return None, 0 #connection inactive
 			
 				elif str(data)[-2] == '.':
-					print('All data received')
-
 					if len(received_data) > 0:
 						try:
-							received_data = pickle.loads(received_data)
 							return received_data, 1
 
 						except BaseException as e:
@@ -153,6 +153,18 @@ def server_send(addr_dict, weight_path):
 		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=port))
 
 	print('Aggregated weights sent to all clients')
+
+
+def get_dict(file_path):
+	"""
+	Function to get parameter dictionary from a file.
+	"""
+	if not is_file(file_path):
+		dict = {}
+	else:
+		with open(file_path, 'rb') as f:
+			dict = pickle.load(f)
+	return dict
 
 
 if __name__ == "__main__":
