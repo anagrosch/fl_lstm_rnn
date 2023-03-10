@@ -2,6 +2,7 @@ import os
 import torch
 import pickle
 import matplotlib.pyplot as plt
+from os.path import join, exists
 
 plt.style.use('ggplot')
 
@@ -68,11 +69,11 @@ def get_model(model, optimizer, path):
 
 def get_params(model, optimizer):
 	"""
-	Function to get model layer weights, add to dictionary, and save to file
+	Function to get model layer weights and save each parameter to its own file
 	"""
-	model_path = os.path.join(os.getcwd(), "outputs", "best_model.pth")
-	param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
-
+	model_path = join(os.getcwd(), "outputs", "best_model.pth")
+	param_path = join(os.getcwd(), "outputs", "best_model_params.pkl")
+	
 	model, optimiser, epoch, loss = get_model(model, optimizer, model_path)
 	
 	param_dict = {}
@@ -82,6 +83,5 @@ def get_params(model, optimizer):
 	# write parameters to text file
 	with open(param_path, 'wb') as f:
 		pickle.dump(param_dict, f)
-
 	
 

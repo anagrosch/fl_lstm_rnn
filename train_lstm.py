@@ -147,6 +147,8 @@ valid_data = Dataset(0.4, args, train=False)
 model = Model(train_data)
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
+get_params(model, optimizer)
+
 if args.train:
 	train_and_save(train_data, valid_data, model, optimizer, args)
 	get_params(model, optimizer)
