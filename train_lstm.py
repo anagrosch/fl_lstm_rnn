@@ -7,7 +7,7 @@ from torch import nn, optim
 from torch.utils.data import DataLoader
 from lstm_model import Model
 from dataset import Dataset
-from utils import SaveBestModel, save_final, get_model, save_plots, get_params
+from utils import SaveBestModel, save_final, get_model, save_plots, save_params, update_params
 
 def valid_file(filename, choices):
 	parser = argparse.ArgumentParser()
@@ -109,8 +109,6 @@ def predict(dataset, model, optimizer, text, next_words):
 	"""
 	Function to predict next words with trained model.
 	"""
-	# get checkpoint from best model
-	model, optimizer, epoch, loss = get_model(model, optimizer, 'outputs/best_model.pth')
 	model.eval()
 
 	words = text.split(' ')
@@ -146,12 +144,17 @@ valid_data = Dataset(0.4, args, train=False)
 
 model = Model(train_data)
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
-
-get_params(model, optimizer)
+	
+# get checkpoint from best model and update parameters
+try:
+	model, optimizer, epoch, loss = get_model(model, optimizer, 'outputs/best_model.pth')
+	model = update_params(model)
+except:
+	print('Cannot load best model. Continuing with untrained model.')
 
 if args.train:
 	train_and_save(train_data, valid_data, model, optimizer, args)
-	get_params(model, optimizer)
+	save_params(model, optimizer)
 
 if args.predict: 
 	print(predict(train_data, model, optimizer, text=args.predict_text, next_words=args.predict_size))

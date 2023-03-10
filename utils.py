@@ -67,7 +67,7 @@ def get_model(model, optimizer, path):
 	return model, optimizer, epoch, loss
 
 
-def get_params(model, optimizer):
+def save_params(model, optimizer):
 	"""
 	Function to get model layer weights and save each parameter to its own file
 	"""
@@ -84,4 +84,19 @@ def get_params(model, optimizer):
 	with open(param_path, 'wb') as f:
 		pickle.dump(param_dict, f)
 	
+
+def update_params(model):
+	"""
+	Function to update model layer weights with aggregated parameters.
+	"""
+	param_path = join(os.getcwd(), "outputs", "best_model_params.pkl")
+
+	with open(param_path, 'rb') as f:
+		param_dict = pickle.load(f)
+
+	for name, param in model.named_parameters():
+		param = param_dict[name]
+	print('\nModel parameters updated')
+
+	return model
 
