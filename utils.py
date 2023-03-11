@@ -1,8 +1,10 @@
 import os
 import torch
 import pickle
+import csv
+import pandas as pd
 import matplotlib.pyplot as plt
-from os.path import join, exists
+from os.path import join, exists, getsize
 
 plt.style.use('ggplot')
 
@@ -40,10 +42,14 @@ def save_final(epochs, model, optimizer, criterion):
 		}, 'outputs/final_model.pth')
 
 
-def save_plots(train_loss, valid_loss):
+def save_plots(train_loss, valid_loss, model_type, time):
 	"""
-	Function to save the loss and accuracy plots to disk.
+	Function to save the loss plots and time plot to disk.
 	"""
+	loss_file = join(os.getcwd(),"outputs","loss.png")
+	time_file = join(os.getcwd(),"outputs","train_times.png")
+	csv_file = join(os.getcwd(),"outputs","times.csv")
+
 	# loss plots
 	plt.figure(figsize=(10,7))
 	plt.plot(train_loss, color='orange', linestyle='-', label='train loss')
@@ -51,7 +57,26 @@ def save_plots(train_loss, valid_loss):
 	plt.xlabel('Epochs')
 	plt.ylabel('Loss')
 	plt.legend()
-	plt.savefig('outputs/loss.png')
+	plt.savefig(loss_file)
+
+	# add training time to csv file
+	with open(csv_file, 'a', newline='') as f:
+		write = csv.writer(f)
+
+		# add headers if csv file is empty
+		if getsize(csv_file) == 0:
+			write.writerow(["Model Type", "Training Time"])
+		write.writerow([model_type, time])
+
+	# time plot
+	df = pd.read_csv(csv_file)
+	x_label = df['Model Type']
+	y_label = df['Training Time']
+	plt.scatter(x, y, s=100, alpha=0.6)
+	plt.xlabel('Model Type')
+	plt.ylabel('Training Time')
+	plt.title('Training Times for Different Model Types')
+	plt.savefig(time_file)
 
 
 def get_model(model, optimizer, path):

@@ -1,6 +1,8 @@
 # Train and implement lstm model
 
-import time, argparse, os
+import os
+import time
+import argparse
 import torch
 import numpy as np
 from torch import nn, optim
@@ -38,10 +40,10 @@ def train_and_save(train_data, valid_data, model, optimizer, args):
 
 		save_best(valid_epoch_loss, epoch, model, optimizer, criterion)
 
-	save_final(args.max_epochs, model, optimizer, criterion)
-	save_plots(train_loss, valid_loss)
-
 	end_time = time.perf_counter()
+
+	save_final(args.max_epochs, model, optimizer, criterion)
+	save_plots(train_loss, valid_loss, "lstm_rnn", end_time-start_time)
 
 	print('TRAINING COMPLETE')
 	print(f"Time Taken: {end_time - start_time}")
