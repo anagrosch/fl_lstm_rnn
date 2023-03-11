@@ -46,7 +46,7 @@ def save_plots(train_loss, valid_loss, model_type, time):
 	"""
 	Function to save the loss plots and time plot to disk.
 	"""
-	loss_file = join(os.getcwd(),"outputs","loss.png")
+	loss_file = join(os.getcwd(),"outputs",model_type+"_loss.png")
 	time_file = join(os.getcwd(),"outputs","train_times.png")
 	csv_file = join(os.getcwd(),"outputs","times.csv")
 

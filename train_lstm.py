@@ -11,12 +11,10 @@ from lstm_model import Model
 from dataset import Dataset
 from utils import SaveBestModel, save_final, get_model, save_plots, save_params, update_params
 
-def valid_file(filename, choices):
-	parser = argparse.ArgumentParser()
-	parser.add_argument('-me', '--max-epochs', type=int, default=100)
+def valid_file(filename):
 	ext = os.path.splitext(filename)[1][1:]
-	if ext not in choices:
-		parser.error("Invalid file type. Does not end in {}".format(choices))
+	if ext != 'csv':
+		parser.error('Invalid file type. Does not end in csv')
 	return filename
 
 
@@ -43,6 +41,7 @@ def train_and_save(train_data, valid_data, model, optimizer, args):
 	end_time = time.perf_counter()
 
 	save_final(args.max_epochs, model, optimizer, criterion)
+	save_params(model, optimizer)
 	save_plots(train_loss, valid_loss, "lstm_rnn", end_time-start_time)
 
 	print('TRAINING COMPLETE')
@@ -128,12 +127,12 @@ def predict(dataset, model, optimizer, text, next_words):
 	return ' '.join([str(char) for char in words])	#convert list to string
 
 # main function
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(prog='TRAIN_LSTM', usage='%(prog)s [options]')
 parser.add_argument('-me', '--max-epochs', type=int, default=100)
 parser.add_argument('-bs', '--batch-size', type=int, default=256)
 parser.add_argument('-sl', '--sequence-length', type=int, default=4)
 parser.add_argument('-t', '--train', action='store_true')
-parser.add_argument('-cf', '--csv-file', type=lambda s:valid_file(s,("csv")), default='data/reddit-cleanjokes.csv')
+parser.add_argument('-cf', '--csv-file', type=valid_file, default='data/reddit-cleanjokes.csv')
 parser.add_argument('-p', '--predict', action='store_true')
 parser.add_argument('-pt', '--predict-text', type=str, default='Knock knock. Whos there?')
 parser.add_argument('-ps', '--predict-size', type=int, default=100)
@@ -156,7 +155,6 @@ except:
 # train model
 if args.train:
 	train_and_save(train_data, valid_data, model, optimizer, args)
-	save_params(model, optimizer)
 
 # run model for prediction
 if args.predict: 
