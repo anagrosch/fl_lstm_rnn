@@ -35,6 +35,8 @@ as a Python dictionary.
 
 Supports multithreading.
 
+User must close socket when no more clients are to connect with `Ctrl+C`.
+
 To execute, run command:
 ```
 python3 aggregate.py --get

@@ -13,7 +13,7 @@ from the central server. Can be used by each client.
 
 ## Usage
 
-### Send parameters to central server
+### Send Parameters To Central Server
 
 Client gets model weights from local file `/outputs/best_model_params.pkl`
 as a Python dictionary. Dictionary is sent to the central server in chunks.
@@ -29,7 +29,7 @@ or
 python3 client_socket.py -s
 ```
 
-### Get aggregated results
+### Get Aggregated Results
 
 Waits to receive aggregated results from the central server. Saves results
 to `outputs/best_model_params.pkl`.

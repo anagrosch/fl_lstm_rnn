@@ -8,10 +8,14 @@ from server_socket import server_get, server_send
 
 final_weights = join(os.getcwd(), "final_weights.pkl")
 
-def aggr_params(path):
+def aggr_params():
 	"""
 	Function to get parameters from each client file.
 	"""
+	print('\n--------------------------')
+	print('Aggregating client weights')
+	print('--------------------------\n')
+
 	curr_dir = os.getcwd()
 	param_dir = join(curr_dir, "client_models")
 
@@ -38,14 +42,18 @@ def aggr_params(path):
 					param_dict[weight] = param_dict[weight] + tmp_dict[weight]/file_count
 				if weight not in param_dict:
 					param_dict[weight] = tmp_dict[weight]/file_count
+				
+			print("Aggregated weights for file: {file}".format(file=file))
 
 	# write aggregated weights to local file
 	with open(final_weights, 'wb') as f:
 		pickle.dump(param_dict, f)
+	print('\nAggregated results saved to final_weights.pkl')
 
 	# delete client weight files
 	try:
 		shutil.rmtree(param_dir)
+		print('Client data deleted')
 	except:
 		raise Exception("Error deleting client_models directory")
 
@@ -54,7 +62,7 @@ def get_dict(file_path):
 	"""
 	Function to get parameter dictionary from a file.
 	"""
-	if not is_file(file_path):
+	if not exists(file_path):
 		dict = {}
 	else:
 		with open(file_path, 'rb') as f:
@@ -76,7 +84,7 @@ if args.get:
 
 # aggregate weights
 if args.aggr:
-	aggr_params() #note: aggregation untested
+	aggr_params() #note: aggregation not fully tested
 	time.sleep(1)
 
 # send aggregated weights

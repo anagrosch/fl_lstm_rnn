@@ -48,7 +48,7 @@ class SocketThread(threading.Thread):
 				self.connection.close()
 				print("Connection closed with {client} due to inactivity or error.".format(client=self.client_info))
 				break
-			
+
 
 	def recv_data(self):
 		"""
@@ -88,9 +88,9 @@ def server_get():
 	"""
 	Function to get client weights with a TCP socket
 	"""
-	print('------------------------------------------')
+	print('\n------------------------------------------')
 	print('Waiting for model parameters from clients.')
-	print('------------------------------------------')
+	print('------------------------------------------\n')
 
 	server_ip = "192.168.1.60"
 	server_port = 10800
@@ -121,7 +121,7 @@ def server_get():
 			socket_thread = SocketThread(connection=connection,
 						     client_info=client_info,
 						     buffer_size=1024,
-						     recv_timeout=10)
+						     recv_timeout=5)
 			socket_thread.start()
 
 		except:
@@ -132,7 +132,7 @@ def server_get():
 	# write client info dictionary to file
 	with open(info_path, 'wb') as f:
 		pickle.dump(addr_dict, f)
-	print("Client addresses saved to file: {path}".format(path=info_path))
+	print('Client addresses saved to file: client_info.pkl')
 
 
 def server_send(weight_path):
@@ -140,13 +140,13 @@ def server_send(weight_path):
 	Function to send aggregated weights to clients.
 	"""
 	print('')
-	print('--------------------------------------')
+	print('\n--------------------------------------')
 	print('Sending aggregated results to clients.')
-	print('--------------------------------------')
+	print('--------------------------------------\n')
 
 	buffer_size = 1024
 	client_port = 12000
-	info_path = join(model_dir, "client_info.pkl")
+	info_path = join(os.getcwd(), "client_info.pkl")
 
 	# get client addresses
 	with open(info_path, 'rb') as f:

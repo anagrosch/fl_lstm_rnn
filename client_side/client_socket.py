@@ -33,7 +33,7 @@ class ClientSocket:
 
 			if status == 0:
 				f.close()
-				print('Aggregated results saved to best_model_params.pkl')
+				print('\nAggregated results saved to best_model_params.pkl')
 
 				self.connection.close()
 				print("Connection closed with {server} due to inactivity or error.".format(server=self.server_info))
@@ -77,9 +77,9 @@ def client_send(server_port=10800, server_ip="192.168.1.60"):
 	Function to send trained model and receive updated weights with
 	TCP socket.
 	"""
-	print('-------------------------------------------------')
+	print('\n-------------------------------------------------')
 	print('Sending local model parameters to central server.')
-	print('-------------------------------------------------')
+	print('-------------------------------------------------\n')
 
 	client_ip = "192.168.1.60" #change with machine's public ip address
 	client_port = 12000
@@ -115,10 +115,9 @@ def client_get(server_ip="192.168.1.60"):
 	"""
 	Function to get aggregated weights from server.
 	"""
-	print('')
-	print('---------------------------------------------------')
+	print('\n---------------------------------------------------')
 	print('Waiting for aggregated results from central server.')
-	print('---------------------------------------------------')
+	print('---------------------------------------------------\n')
 
 	client_ip = "192.168.1.60" #change to machine's ip
 	client_port = 12000
@@ -130,25 +129,25 @@ def client_get(server_ip="192.168.1.60"):
 	soc.listen(1)
 	print('Listening for connection...')
 
-	while True:
-		try:
+	try:
+		while True:
 			connection, address = soc.accept()
 			if address[0] == server_ip:
-				print("Accepted connection from server: {addr}".format(addr=address))
-
-				client = ClientSocket(connection=connection,
-						      server_info=address,
-						      buffer_size=1024,
-						      recv_timeout=10)
-				client.run()
-
+				break
 			else:
 				print("Rejected connection from server: {addr}".format(addr=address))
 
-		except:
-			soc.close()
-			print('Socket closed.')
-			break
+		print("Accepted connection from server: {addr}\n".format(addr=address))
+
+		client = ClientSocket(connection=connection,
+				      server_info=address,
+				      buffer_size=1024,
+				      recv_timeout=5)
+		client.run()
+
+	except:
+		soc.close()
+		print('Socket closed.')
 
 
 # main function
