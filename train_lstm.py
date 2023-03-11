@@ -6,6 +6,7 @@ import argparse
 import torch
 import numpy as np
 from torch import nn, optim
+from sklearn.metrics import accuracy_score
 from torch.utils.data import DataLoader
 from lstm_model import Model
 from dataset import Dataset
@@ -23,6 +24,7 @@ def train_and_save(train_data, valid_data, model, optimizer, args):
 	Function to run training, validation, and add checkpoints.
 	"""
 	train_loss, valid_loss = [], []
+	train_acc, valid_acc = [], []
 
 	criterion = nn.CrossEntropyLoss()
 	save_best = SaveBestModel()
@@ -30,11 +32,14 @@ def train_and_save(train_data, valid_data, model, optimizer, args):
 	start_time = time.perf_counter()
 
 	for epoch in range(args.max_epochs):
-		train_epoch_loss = train_epoch(train_data, criterion, optimizer, model, epoch, args)
-		valid_epoch_loss = validate(valid_data, criterion, model, args)
+		train_epoch_loss, train_epoch_acc = train_epoch(train_data, criterion, optimizer, model, epoch, args)
+		valid_epoch_loss, valid_epoch_acc = validate(valid_data, criterion, model, args)
 
 		train_loss.append(train_epoch_loss)
 		valid_loss.append(valid_epoch_loss)
+		
+		train_acc.append(train_epoch_acc)
+		valid_acc.append(valid_epoch_acc)
 
 		save_best(valid_epoch_loss, epoch, model, optimizer, criterion)
 
@@ -42,7 +47,7 @@ def train_and_save(train_data, valid_data, model, optimizer, args):
 
 	save_final(args.max_epochs, model, optimizer, criterion)
 	save_params(model, optimizer)
-	save_plots(train_loss, valid_loss, "lstm_rnn", end_time-start_time)
+	save_plots(train_loss, valid_loss, train_acc, valid_acc, "lstm_rnn", end_time-start_time)
 
 	print('TRAINING COMPLETE')
 	print(f"Time Taken: {end_time - start_time}")
@@ -57,9 +62,8 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 	
 	counter = 0
 	running_loss = 0.0
+	running_acc = 0.0
 	dataloader = DataLoader(dataset, batch_size=args.batch_size)
-
-	print(dataloader)
 
 	state_h, state_c = model.init_state(args.sequence_length)
 
@@ -70,6 +74,8 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 		y_pred, (state_h, state_c) = model(x, (state_h, state_c))
 		loss = criterion(y_pred.transpose(1, 2), y)
 		running_loss += loss.item()
+		acc = accuracy_score(y, y_pred,transpose(1, 2))
+		running_acc += acc
 
 		state_h = state_h.detach()
 		state_c = state_c.detach()
@@ -77,10 +83,11 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 		loss.backward()		#backpropagation & calculate gradients
 		optimizer.step()	#update weights
 
-		print({ 'epoch': epoch, 'batch': batch, 'loss': loss.item() })
+		print({ 'epoch': epoch, 'batch': batch, 'loss': loss.item(), 'accuracy': acc })
 
 	epoch_loss = running_loss/counter
-	return epoch_loss
+	epoch_acc = running_acc/counter
+	return epoch_loss, epoch_acc
 
 
 def validate(dataset, criterion, model, args):
@@ -91,6 +98,7 @@ def validate(dataset, criterion, model, args):
 
 	counter = 0
 	running_loss = 0.0
+	running_acc = 0.0
 	dataloader = DataLoader(dataset, batch_size=args.batch_size)
 
 	state_h, state_c = model.init_state(args.sequence_length)
@@ -101,9 +109,11 @@ def validate(dataset, criterion, model, args):
 			y_pred, (state_h, state_c) = model(x, (state_h, state_c))
 			loss = criterion(y_pred.transpose(1, 2), y)
 			running_loss += loss.item()
+			running_acc += accuracy_score(y, y_pred.transpose(1,2))
 
 	epoch_loss = running_loss/counter
-	return epoch_loss
+	epoch_acc = running_acc/counter
+	return epoch_loss, epoch_acc
 
 
 def predict(dataset, model, optimizer, text, next_words):
