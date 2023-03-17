@@ -5,7 +5,7 @@ import threading
 from socket import *
 from os.path import join, exists
 
-server_ip = "" #change to server's public ip address
+server_ip = "127.0.0.1" #change to server's public ip address
 model_dir = join(os.getcwd(), "client_models")
 
 class SocketThread(threading.Thread):
@@ -157,6 +157,7 @@ def server_send(weight_path, client_port=12000):
 	print('Sending aggregated results to clients.')
 	print('--------------------------------------\n')
 
+	#client_port = 12000
 	buffer_size = 1024
 	info_path = join(os.getcwd(), "client_info.pkl")
 
@@ -171,8 +172,17 @@ def server_send(weight_path, client_port=12000):
 		print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
 
 		# send weights to client in chunks
-		send_chunks(soc, join(os.getcwd(), "final_weights.pkl"))
-		print("Server send weights to client: ({ip}, {port})".format(ip=ip, port=client_port))
+		send_chunks(soc, weight_path)
+		print("Server send weights to client: ({ip}, {port})".format(ip=ip,port=client_port))
+
+		# get confirmation from clients
+		received_data = b''
+		while str(received_data)[-2] != '.':
+			data = soc.recv(8)
+			received_data += data
+
+		received_data = pickle.loads(received_data)
+		print("Received status from ({ip}, {port}): {data}\n".format(ip=ip,port=client_port,data=received_data))
 
 		soc.close()
 		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=client_port))

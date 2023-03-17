@@ -4,8 +4,8 @@ import pickle
 import argparse
 from socket import *
 
-server_ip = "" #change to server's public ip address
-client_ip = "" #change to client's public ip address
+server_ip = "127.0.0.1" #change to server's public ip address
+client_ip = "127.0.0.1" #change to client's public ip address
 param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
 
 class ClientSocket:
@@ -34,6 +34,8 @@ class ClientSocket:
 				count += 1
 
 			if status == 0:
+				self.confirm_data()
+
 				f.close()
 				print('\nAggregated results saved to best_model_params.pkl')
 
@@ -49,6 +51,7 @@ class ClientSocket:
 		received_data = b''
 		while True:
 			try:
+				self.connection.settimeout(self.recv_timeout)
 				data = self.connection.recv(self.buffer_size)
 				received_data += data
 
@@ -72,6 +75,16 @@ class ClientSocket:
 			except BaseException as e:
 				print("Error receiving data: {msg}.\n".format(msg=e))
 				return None, 0
+
+
+	def confirm_data(self):
+		"""
+		Function to send confirmation of received data to server.
+		"""
+		msg = "Data received."
+		msg = pickle.dumps(msg)
+		self.connection.sendall(msg)
+		print('Sent data confirmation to server.')
 
 
 def client_send(server_port=10800, client_port=12000):
@@ -98,7 +111,7 @@ def client_send(server_port=10800, client_port=12000):
 		received_data += data
 
 	received_data = pickle.loads(received_data)
-	print("Received status from server: {data}.".format(data=received_data))
+	print("Received status from server: {data}\n".format(data=received_data))
 
 	clientSocket.close()
 	print('Client socket closed')
