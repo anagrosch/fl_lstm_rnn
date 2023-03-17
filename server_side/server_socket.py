@@ -1,9 +1,11 @@
-import os, time
+import os
+import time
 import pickle
 import threading
 from socket import *
 from os.path import join, exists
 
+server_ip = "" #change to server's public ip address
 model_dir = join(os.getcwd(), "client_models")
 
 class SocketThread(threading.Thread):
@@ -31,7 +33,7 @@ class SocketThread(threading.Thread):
 			file_path = join(model_dir,str(port_num)+"_model.pkl")
 
 		f = open(file_path, 'wb')
-		param_count = 0
+		self.param_count = 0
 		while True:
 			self.start_time = time.time()
 			received_data, status = self.recv_data()
@@ -40,10 +42,12 @@ class SocketThread(threading.Thread):
 				# write received data to file
 				f.write(received_data)
 
-				print("Received chunk {num} from client".format(num=param_count))
-				param_count += 1
+				print("Received chunk {num} from client: {client}".format(num=self.param_count,client=self.client_info))
+				self.param_count += 1
 
 			if status == 0:
+				self.confirm_data()
+
 				f.close()
 				self.connection.close()
 				print("Connection closed with {client} due to inactivity or error.".format(client=self.client_info))
@@ -59,6 +63,7 @@ class SocketThread(threading.Thread):
 		received_data = b''
 		while True:
 			try:
+				self.connection.settimeout(self.recv_timeout)
 				data = self.connection.recv(self.buffer_size)
 				received_data += data
 
@@ -80,11 +85,21 @@ class SocketThread(threading.Thread):
 				else: self.start_time = time.time() #reset timeout counter
 
 			except BaseException as e:
-				print("Error receiving data: {msg}.\n".format(msg=e))
+				print("Error receiving data from {client}: {msg}.\n".format(client=self.client_info,msg=e))
 				return None, 0
 
 
-def server_get():
+	def confirm_data(self):
+		"""
+		Function to send confirmation of received data to client.
+		"""
+		msg = "Server received {num} chunks.".format(num=self.param_count)
+		msg = pickle.dumps(msg)
+		self.connection.sendall(msg)
+		print("Sent data confirmation to client: {client}".format(client=self.client_info))
+
+
+def server_get(server_port=10800):
 	"""
 	Function to get client weights with a TCP socket
 	"""
@@ -92,8 +107,6 @@ def server_get():
 	print('Waiting for model parameters from clients.')
 	print('------------------------------------------\n')
 
-	server_ip = "192.168.1.60"
-	server_port = 10800
 	info_path = join(os.getcwd(), "client_info.pkl")
 
 	# create directory to save models to
@@ -126,7 +139,7 @@ def server_get():
 
 		except:
 			serverSocket.close()
-			print('Socket closed. Server received no connections')
+			print('Socket closed. Server received no connections.\n')
 			break
 
 	# write client info dictionary to file
@@ -135,7 +148,7 @@ def server_get():
 	print('Client addresses saved to file: client_info.pkl')
 
 
-def server_send(weight_path):
+def server_send(weight_path, client_port=12000):
 	"""
 	Function to send aggregated weights to clients.
 	"""
@@ -145,7 +158,6 @@ def server_send(weight_path):
 	print('--------------------------------------\n')
 
 	buffer_size = 1024
-	client_port = 12000
 	info_path = join(os.getcwd(), "client_info.pkl")
 
 	# get client addresses
@@ -181,3 +193,5 @@ def send_chunks(soc, path):
 			break
 		soc.sendall(chunk)
 
+if __name__ == "__main__":
+	server_get()

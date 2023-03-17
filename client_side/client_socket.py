@@ -4,6 +4,8 @@ import pickle
 import argparse
 from socket import *
 
+server_ip = "" #change to server's public ip address
+client_ip = "" #change to client's public ip address
 param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
 
 class ClientSocket:
@@ -72,7 +74,7 @@ class ClientSocket:
 				return None, 0
 
 
-def client_send(server_port=10800, server_ip="192.168.1.60"):
+def client_send(server_port=10800, client_port=12000):
 	"""
 	Function to send trained model and receive updated weights with
 	TCP socket.
@@ -81,9 +83,6 @@ def client_send(server_port=10800, server_ip="192.168.1.60"):
 	print('Sending local model parameters to central server.')
 	print('-------------------------------------------------\n')
 
-	client_ip = "192.168.1.60" #change with machine's public ip address
-	client_port = 12000
-
 	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
 	clientSocket.connect((server_ip, server_port))
 	print('Connected to server')
@@ -91,6 +90,15 @@ def client_send(server_port=10800, server_ip="192.168.1.60"):
 	# send weights from each parameter file
 	send_chunks(clientSocket, param_path)
 	print('Client sent model parameters to the server.')
+
+	# get confirmation from server
+	received_data = b''
+	while str(received_data)[-2] != '.':
+		data = clientSocket.recv(8)
+		received_data += data
+
+	received_data = pickle.loads(received_data)
+	print("Received status from server: {data}.".format(data=received_data))
 
 	clientSocket.close()
 	print('Client socket closed')
@@ -111,16 +119,13 @@ def send_chunks(soc, path):
 		soc.sendall(chunk)
 
 
-def client_get(server_ip="192.168.1.60"):
+def client_get(client_port=12000):
 	"""
 	Function to get aggregated weights from server.
 	"""
 	print('\n---------------------------------------------------')
 	print('Waiting for aggregated results from central server.')
 	print('---------------------------------------------------\n')
-
-	client_ip = "192.168.1.60" #change to machine's ip
-	client_port = 12000
 
 	soc = socket(AF_INET, SOCK_STREAM)
 	soc.bind((client_ip, client_port))
