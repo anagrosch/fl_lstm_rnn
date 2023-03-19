@@ -23,7 +23,8 @@ each client's parameters and redistribute the aggregates results.
 
 When a connection is established between the central server and client(s),
 the server creates a file named `<client_port>_model.pkl` for each client.
-If the file already exists, the `client_port` is incremented by 1.
+If the file already exists, the `client_port` is incremented by 1 until the
+file name is available.
 
 The trained model received by each client is saved to the client's
 respective file.
@@ -32,6 +33,9 @@ Client files are saved to `/client_models/`.
 
 The IP addresses of each client are saved to `/client_models/client_info.pkl`
 as a Python dictionary.
+
+The server sends a confirmation of received data to the clients, including the
+number of data chunks received.
 
 Supports multithreading.
 
@@ -48,15 +52,26 @@ python3 aggregate.py -g
 
 #### Redistribute Aggregated Results to Clients
 
-Gets aggregated results from local file `final_weights.pkl` and sends the
+Server gets aggregated results from local file `final_weights.pkl` and sends the
 data to each client address provided in local file `client_info.pkl`.
 
 Must change `server_ip` to IP address or hostname of server.
 
+Must start client process first to receive the data.
+
+To execute, run command:
+```
+python3 aggregate.py --send
+```
+or
+```
+python3 aggregate.py -s
+```
+
 ### Aggregation Program
 
 Reads each client's parameters from client files located in `/client_models/`.
-Aggregates new client parameters.
+Aggregates new client parameters with equal weights.
 
 If there are weights saved in local file `final_weights.pkl` from a
 previous round of aggregation, the weights are aggregated with the

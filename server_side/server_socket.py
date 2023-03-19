@@ -157,7 +157,6 @@ def server_send(weight_path, client_port=12000):
 	print('Sending aggregated results to clients.')
 	print('--------------------------------------\n')
 
-	#client_port = 12000
 	buffer_size = 1024
 	info_path = join(os.getcwd(), "client_info.pkl")
 
@@ -166,8 +165,8 @@ def server_send(weight_path, client_port=12000):
 		addr_dict = pickle.load(f)
 
 	# iterate through each client address
+	soc = socket(AF_INET, SOCK_STREAM)
 	for ip in addr_dict.keys():
-		soc = socket(AF_INET, SOCK_STREAM)
 		soc.connect((ip, client_port))
 		print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
 
