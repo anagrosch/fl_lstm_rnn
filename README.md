@@ -16,4 +16,4 @@ TCP socket file.
 
 ## Resources
 
-- [Federated Learning Demo in Python][https://medium.com/cometheartbeat/federated-learning-demo-in-python-part-2-multiple-connections-using-threading-8d781d53e0c8]
+- [Federated Learning Demo in Python](https://medium.com/cometheartbeat/federated-learning-demo-in-python-part-2-multiple-connections-using-threading-8d781d53e0c8)
