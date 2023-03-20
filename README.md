@@ -83,3 +83,15 @@ pip install --upgrade pip
 python3 -m pip install sycret
 pip3 install websocket-client
 ```
+
+## Resources
+
+- [Saving and Loading the Best Model in PyTorch](https://debuggercafe.com/saving-and-loading-the-best-model-in-pytorch/)
+
+- [PyTorch LSTM: Text Generation Tutorial](https://www.kdnuggets.com/2020/07/pytorch-lstm-text-generation-tutorial.html)
+
+- [Difference Between PyTorch and PySyft](https://analyticsindiamag.com/difference-between-pytorch-and-pysyft/)
+
+- [A Step by Step guide to installing PyTorch in Raspberry Pi](https://medium.com/secure-and-private-ai-writing-challenge/a-step-by-step-guide-to-installing-pytorch-in-raspberry-pi-a1491bb80531)
+
+- [A Step by Step guide to installing PySyft in Raspberry Pi](https://medium.com/secure-and-private-ai-writing-challenge/a-step-by-step-guide-to-installing-pysyft-in-raspberry-pi-d8d10c440c37)

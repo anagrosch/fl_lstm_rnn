@@ -13,6 +13,9 @@ from dataset import Dataset
 from utils import SaveBestModel, save_final, get_model, save_plots, save_params, update_params
 
 def valid_file(filename):
+	"""
+	Function to check that the csv file input is a csv file.
+	"""
 	ext = os.path.splitext(filename)[1][1:]
 	if ext != 'csv':
 		parser.error('Invalid file type. Does not end in csv')
@@ -74,7 +77,7 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 		y_pred, (state_h, state_c) = model(x, (state_h, state_c))
 		loss = criterion(y_pred.transpose(1, 2), y)
 		running_loss += loss.item()
-		acc = accuracy_score(y, y_pred,transpose(1, 2))
+		acc = accuracy_score(y, y_pred.transpose(1, 2))
 		running_acc += acc
 
 		state_h = state_h.detach()
@@ -116,16 +119,16 @@ def validate(dataset, criterion, model, args):
 	return epoch_loss, epoch_acc
 
 
-def predict(dataset, model, optimizer, text, next_words):
+def predict(dataset, model, optimizer, args):
 	"""
 	Function to predict next words with trained model.
 	"""
 	model.eval()
 
-	words = text.split(' ')
+	words = args.predict_text.split(' ')
 	state_h, state_c = model.init_state(len(words))
 
-	for i in range(0, next_words):
+	for i in range(0, args.predict_size):
 		x = torch.tensor([[dataset.word_to_index[w] for w in words[i:]]])
 		y_pred, (state_h, state_c) = model(x, (state_h, state_c))
 
@@ -138,11 +141,11 @@ def predict(dataset, model, optimizer, text, next_words):
 
 # main function
 parser = argparse.ArgumentParser(prog='TRAIN_LSTM', usage='%(prog)s [options]')
-parser.add_argument('-me', '--max-epochs', type=int, default=100)
-parser.add_argument('-bs', '--batch-size', type=int, default=256)
+parser.add_argument('-me', '--max-epochs', type=int, default=32)
+parser.add_argument('-bs', '--batch-size', type=int, default=64)
 parser.add_argument('-sl', '--sequence-length', type=int, default=4)
-parser.add_argument('-t', '--train', action='store_true')
 parser.add_argument('-cf', '--csv-file', type=valid_file, default='data/reddit-cleanjokes.csv')
+parser.add_argument('-t', '--train', action='store_true')
 parser.add_argument('-p', '--predict', action='store_true')
 parser.add_argument('-pt', '--predict-text', type=str, default='Knock knock. Whos there?')
 parser.add_argument('-ps', '--predict-size', type=int, default=100)
@@ -168,5 +171,5 @@ if args.train:
 
 # run model for prediction
 if args.predict: 
-	print(predict(train_data, model, optimizer, text=args.predict_text, next_words=args.predict_size))
+	print(predict(train_data, model, optimizer, args))
 
