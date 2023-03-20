@@ -13,3 +13,7 @@ The client side files are located in the `client_side` folder.
 
 Client must add the full model files to the same location as the
 TCP socket file.
+
+## Resources
+
+- [Federated Learning Demo in Python][https://medium.com/cometheartbeat/federated-learning-demo-in-python-part-2-multiple-connections-using-threading-8d781d53e0c8]

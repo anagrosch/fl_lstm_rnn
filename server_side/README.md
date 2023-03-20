@@ -31,7 +31,7 @@ respective file.
 
 Client files are saved to `/client_models/`.
 
-The IP addresses of each client are saved to `/client_models/client_info.pkl`
+The IP addresses of each client are saved to `/outputs/client_info.pkl`
 as a Python dictionary.
 
 The server sends a confirmation of received data to the clients, including the
@@ -52,8 +52,9 @@ python3 aggregate.py -g
 
 #### Redistribute Aggregated Results to Clients
 
-Server gets aggregated results from local file `final_weights.pkl` and sends the
-data to each client address provided in local file `client_info.pkl`.
+Server gets aggregated results from local file `/outputs/final_weights.pkl`
+and sends the data to each client address provided in local file
+`client_info.pkl`.
 
 Must change `server_ip` to IP address or hostname of server.
 
@@ -73,11 +74,11 @@ python3 aggregate.py -s
 Reads each client's parameters from client files located in `/client_models/`.
 Aggregates new client parameters with equal weights.
 
-If there are weights saved in local file `final_weights.pkl` from a
+If there are weights saved in file `/outputs/final_weights.pkl` from a
 previous round of aggregation, the weights are aggregated with the
 new client weights.
 
-Final aggregated results saved to `final_weights.pkl`.
+Final aggregated results saved to `/outputs/final_weights.pkl`.
 
 The `/client_models/` directory with the client weights is deleted
 after aggregation.

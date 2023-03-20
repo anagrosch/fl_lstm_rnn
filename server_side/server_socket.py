@@ -107,7 +107,7 @@ def server_get(server_port=10800):
 	print('Waiting for model parameters from clients.')
 	print('------------------------------------------\n')
 
-	info_path = join(os.getcwd(), "client_info.pkl")
+	info_path = join(os.getcwd(),"outputs","client_info.pkl")
 
 	# create directory to save models to
 	if not exists(model_dir):
@@ -145,7 +145,7 @@ def server_get(server_port=10800):
 	# write client info dictionary to file
 	with open(info_path, 'wb') as f:
 		pickle.dump(addr_dict, f)
-	print('Client addresses saved to file: client_info.pkl')
+	print('Client addresses saved to file: /outputs/client_info.pkl')
 
 
 def server_send(weight_path, client_port=12000):
@@ -158,7 +158,7 @@ def server_send(weight_path, client_port=12000):
 	print('--------------------------------------\n')
 
 	buffer_size = 1024
-	info_path = join(os.getcwd(), "client_info.pkl")
+	info_path = join(os.getcwd(),"outputs","client_info.pkl")
 
 	# get client addresses
 	with open(info_path, 'rb') as f:

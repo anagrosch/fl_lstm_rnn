@@ -2,11 +2,13 @@ import os
 import time
 import argparse
 import pickle
+import csv
 import shutil
-from os.path import join, isfile, exists
+from datetime import date
+from os.path import join, isfile, exists, getsize
 from server_socket import server_get, server_send
 
-final_weights = join(os.getcwd(), "final_weights.pkl")
+final_weights = join(os.getcwd(),"outputs","final_weights.pkl")
 
 def aggr_params():
 	"""
@@ -48,7 +50,7 @@ def aggr_params():
 	# write aggregated weights to local file
 	with open(final_weights, 'wb') as f:
 		pickle.dump(param_dict, f)
-	print('\nAggregated results saved to final_weights.pkl')
+	print('\nAggregated results saved to /outputs/final_weights.pkl')
 
 	# delete client weight files
 	try:
@@ -70,6 +72,23 @@ def get_dict(file_path):
 	return dict
 
 
+def save_times(get_time=0, aggr_time=0, send_time=0):
+	"""
+	Function to save transfer times to a csv file.
+	"""
+	csv_file = join(os.getcwd(),"outputs","server_times.csv")
+	curr_date = date.today()
+	date_format = curr_data.strftime("%m/%d/%y")
+	
+	with open(csv_file, 'a', newline='') as f:
+		write = csv.writer(f)
+		
+		# add headers if csv file is empty
+		if getsize(csv_file) == 0:
+			write.writerow(["End Date","Get Weights","Aggregate","Redistribute"])
+		write.writerow([date_format, get_time, aggr_time, send_time])
+
+
 # main function
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from clients')
@@ -79,19 +98,25 @@ args = parser.parse_args()
 
 # get trained models from clients
 if args.get:
+	start_time = time.perf_counter()
 	server_get()
-	time.sleep(1)
+	get_time = time.perf_counter() - start_time
 
 # aggregate weights
 if args.aggr:
-	aggr_params() #note: aggregation not fully tested
-	time.sleep(1)
+	start_time = time.perf_counter()
+	aggr_params()
+	aggr_time = time.perf_counter() - start_time
 
 # send aggregated weights
 if args.send:
+	start_time = time.perf_counter()
 	server_send(final_weights)
-	time.sleep(1)
+	send_time = time.perf_counter() - start_time
 
 if not(args.get or args.aggr or args.send):
 	print('Error: No action chosen')
 	print('<python3 aggregate.py --help> for help')
+
+save_times(get_time, aggr_time, send_time)
+
