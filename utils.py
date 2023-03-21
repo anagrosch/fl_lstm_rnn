@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from os.path import join, exists, getsize
 
-plt.style.use('ggplot')
+plt.style.use('bmh')
 
 class SaveBestModel:
 	"""
@@ -42,22 +42,32 @@ def save_final(epochs, model, optimizer, criterion):
 		}, 'outputs/final_model.pth')
 
 
-def save_plots(train_loss, valid_loss, model_type, time):
+def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time):
 	"""
 	Function to save the loss plots and time plot to disk.
 	"""
-	loss_file = join(os.getcwd(),"outputs","loss.png")
+	loss_file = join(os.getcwd(),"outputs",model_type+"_loss.png")
+	acc_file = join(os.getcwd(),"outputs",model_type+"_acc.png")
 	time_file = join(os.getcwd(),"outputs","train_times.png")
 	csv_file = join(os.getcwd(),"outputs","times.csv")
 
 	# loss plots
 	plt.figure(figsize=(10,7))
-	plt.plot(train_loss, color='orange', linestyle='-', label='train loss')
-	plt.plot(valid_loss, color='red', linestyle='-', label='validation loss')
+	plt.plot(train_loss, color='a4d5dc', linestyle='-', label='train loss')
+	plt.plot(valid_loss, color='b5b9ff', linestyle='-', label='validation loss')
 	plt.xlabel('Epochs')
 	plt.ylabel('Loss')
 	plt.legend()
 	plt.savefig(loss_file)
+
+	# accuracy plots
+	plt.figure(figsize=(10,7))
+	plt.plot(train_acc, color='a4d5dc', linestyle='-', label='train accuracy')
+	plt.plot(valid_acc, color='b5b9ff', linestyle='-', label='validation accuracy')
+	plt.xlabel('Epochs')
+	plt.ylabel('Accuracy')
+	plt.legend()
+	plt.savefig(acc_file)
 
 	# add training time to csv file
 	with open(csv_file, 'a', newline='') as f:
@@ -70,9 +80,9 @@ def save_plots(train_loss, valid_loss, model_type, time):
 
 	# time plot
 	df = pd.read_csv(csv_file)
-	x_label = df['Model Type']
-	y_label = df['Training Time']
-	plt.scatter(x, y, s=100, alpha=0.6)
+	x = df['Model Type']
+	y = df['Training Time']
+	plt.scatter(x, y, c='#8fb9a1', s=100, alpha=0.8)
 	plt.xlabel('Model Type')
 	plt.ylabel('Training Time')
 	plt.title('Training Times for Different Model Types')

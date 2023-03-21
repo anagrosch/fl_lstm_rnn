@@ -1,4 +1,4 @@
-# Long Short Term Memory (LSTM) Recurrent Neural Network (RNN)
+# LSTM RNN with Differential Privacy (DP)
 
 A simple lstm rnn model that predicts the rest of the sentence given a number of words.
 
