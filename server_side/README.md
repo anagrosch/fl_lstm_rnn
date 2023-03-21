@@ -7,17 +7,21 @@ aggregates the data, then redistributes the weights to the clients.
 
 This folder has the following files:
 
-- `server_socket.py`: Socket app to create `pkl` files with model
+- `basic_server.py`: Socket app to create `pkl` files with model
 parameters received from each client. Sends aggregated results back
-to each client.
+to each client. Executes `aggregate.py` to aggregate the collected
+client models.
+
+- `random_sampling_server.py`: Socket app with random sub-sampling of
+clients. Uses `basic_server.py` as base foundation.
 
 - `aggregate.py`: Aggregates each client's model parameters and saves
-the final results to a local file. Executes `server_socket.py` to get
-each client's parameters and redistribute the aggregates results.
+the final results to a local file. Saves collection, aggregation, and
+redistribution times to a csv file.
 
 ## Usage
 
-### Socket Program
+### Basic Socket Program
 
 #### Get Client Parameters
 
@@ -43,11 +47,11 @@ User must close socket when no more clients are to connect with `Ctrl+C`.
 
 To execute, run command:
 ```
-python3 aggregate.py --get
+python3 basic_server.py --get
 ```
 or
 ```
-python3 aggregate.py -g
+python3 basic_server.py -g
 ```
 
 #### Redistribute Aggregated Results to Clients
@@ -56,17 +60,86 @@ Server gets aggregated results from local file `/outputs/final_weights.pkl`
 and sends the data to each client address provided in local file
 `client_info.pkl`.
 
-Must change `server_ip` to IP address or hostname of server.
+Must change `SERVER_IP` to IP address or hostname of server.
 
 Must start client process first to receive the data.
 
 To execute, run command:
 ```
-python3 aggregate.py --send
+python3 basic_server.py --send
 ```
 or
 ```
-python3 aggregate.py -s
+python3 basic_server.py -s
+```
+
+### Random Sub-Sampling Socket Program
+
+#### Initialize
+
+Opens server socket and waits for connections from clients to be used for
+aggregation. Saves each client's IP address as a Python dictionary. Each
+key is randomly assigned 0 or 1.
+
+A value of 1 means the client's model will be used in the next round of
+aggregation. A value of 0 means the client is not part of the next sample.
+
+The Python dictionary is saved to `/outputs/client_info.pkl`.
+
+Must run initialization before collecting client models.
+
+To execute, run command:
+```
+python3 random_sampling_socket.py --init
+```
+or
+```
+python3 random_sampling_socket.py -i
+```
+
+#### Get Client Parameters
+
+When a connection is established between the central server and client(s),
+the server checks if the client's IP address is in the dictionary saved to
+file `/outputs/client_info.pkl`.
+If it is not, the connection is refused.
+
+If the value saved to the client's IP address is a 0, the server tells the
+client it is not part of the round's sample and closes the connection.
+
+If the value saved to the client's IP address is a 1, the server continues
+the steps described in Get Client Parameters in
+[Basic Socket Program](#basic-socket-program).
+
+The values for each client's IP address is reassigned 0's and 1's randomly.
+
+To execute, run command:
+```
+python3 random_sampling_server.py --get
+```
+or
+```
+python3 random_sampling_server.py -g
+```
+
+#### Redistribute Aggregated Results to Clients
+
+Server gets client IP addresses from dictionary in file `/outputs/client_info.pkl`.
+
+Server sends aggregated results from file `/outputs/final_weights.pkl` to each
+client whose dictionary value is 1.
+
+Must change `SERVER_IP` to IP address or hostname of server.
+
+Must start client process first.
+
+To execute, run command:
+```
+python3 random_sampling_server.py --send
+```
+or
+```
+python3 random_sampling_server.py -s
 ```
 
 ### Aggregation Program
@@ -83,11 +156,21 @@ Final aggregated results saved to `/outputs/final_weights.pkl`.
 The `/client_models/` directory with the client weights is deleted
 after aggregation.
 
-To execute, run command:
+To execute with the basic server, run command:
 ```
-python3 aggregate.py --aggr
+python3 basic_server.py --aggr
 ```
 or
 ```
-python3 aggregate.py -a
+python3 basic_server.py -a
 ```
+
+To execute with random sub-sampling, run command:
+```
+python3 random_sampling_server.py --aggr
+```
+or
+```
+python3 random_sampling_server.py -a
+```
+

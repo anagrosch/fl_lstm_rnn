@@ -7,11 +7,25 @@ waits for aggregated results.
 
 This folder has the following file:
 
-- `client_socket.py`: Client app to send client's trained model
+- `basic_client.py`: Client app to send client's trained model
 parameters to the central server. Waits for aggregated results
 from the central server. Can be used by each client.
 
+- `random_sampling_client.py`: Client app for random sub-sampling of
+clients. Uses `basic_client.py` as base foundation.
+
 ## Usage
+
+### Random Sub-Sampling
+
+Only applicable for `random_sampling_client.py`.
+
+Client waits for sampling selection from server.
+
+If client is not selected, connection is closed.
+
+If client is selected, client continues with steps described in
+[Send section](#send-parameters-to-central-server)
 
 ### Send Parameters To Central Server
 
@@ -20,13 +34,22 @@ as a Python dictionary. Dictionary is sent to the central server in chunks.
 
 Must change `client_ip` to IP address or hostname of client.
 
-To execute, run command:
+To execute the basic client, run command:
 ```
-python3 client_socket.py --send
+python3 basic_client.py --send
 ```
 or
 ```
-python3 client_socket.py -s
+python3 basic_client.py -s
+```
+
+To execute with random sub-sampling, run command:
+```
+python3 random_sampling_client.py --send
+```
+or
+```
+python3 random_sampling_client.py -s
 ```
 
 ### Get Aggregated Results
@@ -38,11 +61,21 @@ Will only accept connections with the server's IP defined by `server_ip`.
 
 This file must be in the same location as the client's model.
 
-To execute, run command:
+To execute the basic client, run command:
 ```
-python3 client_socket.py --get
+python3 basic_client.py --get
 ```
 or
 ```
-python3 client_socket.py -g
+python3 basic_client.py -g
 ```
+
+To execute with random sub-sampling, run command:
+```
+python3 random_sampling_client.py --get
+```
+or
+```
+python3 random_sampling_client.py -g
+```
+

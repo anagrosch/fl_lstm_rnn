@@ -4,9 +4,9 @@ import pickle
 import argparse
 from socket import *
 
-server_ip = "127.0.0.1" #change to server's public ip address
-client_ip = "127.0.0.1" #change to client's public ip address
-param_path = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
+SERVER_IP = "127.0.0.1" #change to server's public ip address
+CLIENT_IP = "127.0.0.1" #change to client's public ip address
+PARAM_PATH = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
 
 class ClientSocket:
 	"""
@@ -20,9 +20,9 @@ class ClientSocket:
 
 	def run(self):
 		"""
-		Function to get aggregated weights and update parameter file.
+		Function to get aggregated weights and save to a tmp parameter file.
 		"""
-		f = open(param_path, 'wb')
+		ft = open("tmp.pkl", 'wb')
 		count = 0
 		while True:
 			self.start_time = time.time()
@@ -97,11 +97,11 @@ def client_send(server_port=10800, client_port=12000):
 	print('-------------------------------------------------\n')
 
 	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
-	clientSocket.connect((server_ip, server_port))
+	clientSocket.connect((SERVER_IP, server_port))
 	print('Connected to server')
 
 	# send weights from each parameter file
-	send_chunks(clientSocket, param_path)
+	send_chunks(clientSocket, PARAM_PATH)
 	print('Client sent model parameters to the server.')
 
 	# get confirmation from server
@@ -141,7 +141,7 @@ def client_get(client_port=12000):
 	print('---------------------------------------------------\n')
 
 	soc = socket(AF_INET, SOCK_STREAM)
-	soc.bind((client_ip, client_port))
+	soc.bind((CLIENT_IP, client_port))
 	print('Socket created')
 
 	soc.listen(1)
@@ -149,8 +149,9 @@ def client_get(client_port=12000):
 
 	try:
 		while True:
+			# wait for connection with server
 			connection, address = soc.accept()
-			if address[0] == server_ip:
+			if address[0] == SERVER_IP:
 				break
 			else:
 				print("Rejected connection from server: {addr}".format(addr=address))
@@ -167,22 +168,49 @@ def client_get(client_port=12000):
 		soc.close()
 		print('Socket closed.')
 
+	update_params()
+	print("Local parameters updated.")
 
-# main function
-parser = argparse.ArgumentParser()
-parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
-parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')
-args = parser.parse_args()
 
-# send trained model parameters to central server
-if args.send:
-	client_send()
-	time.sleep(1)
+def update_params():
+	"""
+	Function to average aggregated params from server with local params.
+	"""
+	with open("tmp.pkl", 'rb') as f:
+		# get aggregated params
+		tmp_dict = pickle.load(f)
 
-# get aggregated results from server and update model parameters
-if args.get:
-	client_get()
+	with open(PARAM_PATH, 'rb') as f:
+		# get local params
+		dict = pickle.load(f)
 
-if not(args.send or args.get):
-	print('Error: No action chosen')
-	print('<python3 client_socket.py --help> for help')
+	for weight in dict.keys():
+		dict[weight] = (dict[weight] + tmp_dict[weight])/2
+
+	with open(PARAM_PATH, 'wb') as f:
+		pickle.dump(dict, f)
+
+	os.remove("tmp.pkl")
+
+
+if __name__ == "__main__":
+	"""
+	Run basic client-server parameter aggregation.
+	"""
+	parser = argparse.ArgumentParser(prog='CLIENT SOCKET', usage='%(prog)s [options]')
+	parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
+	parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')
+	args = parser.parse_args()
+
+	# send trained model parameters to central server
+	if args.send:
+		client_send()
+		time.sleep(1)
+
+	# get aggregated results from server and update model parameters
+	if args.get:
+		client_get()
+
+	if not(args.send or args.get):
+		print('Error: No action chosen')
+		print('<python3 client_socket.py --help> for help')
