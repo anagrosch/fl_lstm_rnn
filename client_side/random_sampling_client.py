@@ -22,7 +22,7 @@ class ClientSocket:
 		"""
 		Function to get aggregated weights and save to a tmp parameter file.
 		"""
-		ft = open("tmp.pkl", 'wb')
+		f = open("tmp.pkl", 'wb')
 		count = 0
 		while True:
 			self.start_time = time.time()
@@ -87,7 +87,40 @@ class ClientSocket:
 		print('Sent data confirmation to server.')
 
 
-def client_send(server_port=10800, client_port=12000):
+def receive_data_from(soc):
+	"""
+	Function to receive data from socket.
+	"""
+	received_data = b''
+	while str(received_data)[-2] != '.':
+		data = soc.recv(8)
+		received_data += data
+
+	received_data = pickle.loads(received_data)
+	return received_data
+
+
+def init_comm(server_port=10800):
+	"""
+	Function to initialize communication with server.
+	"""
+	print('\n-----------------------------------------')
+	print('Initializing server-client communication.')
+	print('-----------------------------------------\n')
+
+	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
+	clientSocket.connect((SERVER_IP, server_port))
+	print('Connected to server')
+
+	# get confirmation from server
+	status = receive_data_from(clientSocket)
+	print("Received status from server: {data}\n".format(data=status))
+
+	clientSocket.close()
+	print('Client socket closed')
+
+
+def client_send(server_port=10800):
 	"""
 	Function to send trained model and receive updated weights with
 	TCP socket.
@@ -101,12 +134,7 @@ def client_send(server_port=10800, client_port=12000):
 	print('Connected to server')
 
 	# get selection status from server
-	received_data = b''
-	while str(received_data)[-2] != '.':
-		data = clientSocket.recv(8)
-		received_data += data 
-
-	status = pickle.loads(received_data)
+	status = receive_data_from(clientSocket)
 	print("Selection status from server: {status}".format(status=status))
 
 	if status == "Selected for sampling":
@@ -115,13 +143,8 @@ def client_send(server_port=10800, client_port=12000):
 		print('Client sent model parameters to the server.')
 
 		# get confirmation from server
-		received_data = b''
-		while str(received_data)[-2] != '.':
-			data = clientSocket.recv(8)
-			received_data += data
-
-		received_data = pickle.loads(received_data)
-		print("Received status from server: {data}\n".format(data=received_data))
+		status = receive_data_from(clientSocket)
+		print("Received status from server: {data}\n".format(data=status))
 
 	clientSocket.close()
 	print('Client socket closed')
@@ -208,19 +231,28 @@ if __name__ == "__main__":
 	Run basic client-server parameter aggregation.
 	"""
 	parser = argparse.ArgumentParser(prog='CLIENT SOCKET', usage='%(prog)s [options]')
+	parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connection')
 	parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
 	parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')
 	args = parser.parse_args()
 
+	if not(args.init or args.send or args.get):
+		print('Error: No action chosen.')
+		print('<python3 random_sampling_client.py --help> for help')
+
+	if (args.init and (args.send or args.get)):
+		print('Error: Cannot run -i/--init with other flags.')
+		print('Run <python3 random_sampling_client.py --init> first')
+		raise SystemExit(1)
+
+	# initialize server-client connection
+	if args.init:
+		init_comm()
+
 	# send trained model parameters to central server
 	if args.send:
 		client_send()
-		time.sleep(1)
 
 	# get aggregated results from server and update model parameters
 	if args.get:
 		client_get()
-
-	if not(args.send or args.get):
-		print('Error: No action chosen')
-		print('<python3 client_socket.py --help> for help')

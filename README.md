@@ -17,3 +17,5 @@ TCP socket file.
 ## Resources
 
 - [Federated Learning Demo in Python](https://medium.com/cometheartbeat/federated-learning-demo-in-python-part-2-multiple-connections-using-threading-8d781d53e0c8)
+
+- [Differentially Private Federated Learning: A Client Level Perspective](https://arxiv.org/abs/1712.07557)

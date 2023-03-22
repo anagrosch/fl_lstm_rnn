@@ -22,7 +22,7 @@ class ClientSocket:
 		"""
 		Function to get aggregated weights and save to a tmp parameter file.
 		"""
-		ft = open("tmp.pkl", 'wb')
+		f = open("tmp.pkl", 'wb')
 		count = 0
 		while True:
 			self.start_time = time.time()

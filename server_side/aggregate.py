@@ -28,12 +28,12 @@ def aggr_params():
 			file_count += 1
 
 	# get parameters from last aggregation round
-	param_dict, file_count = get_dict(final_weights,file_count)
+	param_dict, file_count = get_dict(final_weights,file_count=file_count)
 
 	tmp_dict = {}
 	for file in os.listdir(param_dir):
 		if file.endswith('.pkl'):
-			tmp_dict, file_count = get_dict(join(param_dir, file),file_count)
+			tmp_dict, file_count = get_dict(join(param_dir, file),file_count=file_count)
 
 			# aggregate params
 			for weight in tmp_dict.keys():
@@ -57,9 +57,9 @@ def aggr_params():
 		raise Exception("Error deleting client_models directory")
 
 
-def get_dict(file_path, file_count):
+def get_dict(file_path, file_count=1):
 	"""
-	Function to get parameter dictionary from a file.
+	Function to get parameter dictionary from a file and prepare weights for aggregation.
 	"""
 	if not exists(file_path):
 		dict = {}
@@ -70,24 +70,25 @@ def get_dict(file_path, file_count):
 		# prepare weights for aggregation
 		file_count += 1
 		for weight in dict.keys():
-			dict[weight] /= file_count
+			dict[weight] = dict[weight] / file_count
 	return dict, file_count
 
 
-def save_times(get_time=0, aggr_time=0, send_time=0):
+def save_times(get_time=-1, aggr_time=-1, send_time=-1):
 	"""
 	Function to save transfer times to a csv file.
+	Value of -1 means specific function was not applied.
 	"""
 	csv_file = join(os.getcwd(),"outputs","server_times.csv")
 	curr_date = date.today()
-	date_format = curr_data.strftime("%m/%d/%y")
+	date_format = curr_date.strftime("%m/%d/%y")
 	
 	with open(csv_file, 'a', newline='') as f:
 		write = csv.writer(f)
 		
 		# add headers if csv file is empty
 		if getsize(csv_file) == 0:
-			write.writerow(["End Date","Get Weights","Aggregate","Redistribute"])
+			write.writerow(["End Date","Get Weights (s)","Aggregate (s)","Redistribute (s)"])
 		write.writerow([date_format, get_time, aggr_time, send_time])
 
 

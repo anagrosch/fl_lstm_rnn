@@ -116,6 +116,11 @@ def server_get(server_port=10800):
 		os.mkdir(MODEL_DIR)
 		print("Client model directory created.")
 
+	# create directory for outputs
+	if not exists("outputs"):
+		os.mkdir("outputs")
+		print("Outputs directory created.")
+
 	# create dictionary to hold client info
 	addr_dict = {}
 
@@ -154,7 +159,6 @@ def server_send(client_port=12000):
 	"""
 	Function to send aggregated weights to clients.
 	"""
-	print('')
 	print('\n--------------------------------------')
 	print('Sending aggregated results to clients.')
 	print('--------------------------------------\n')
@@ -235,7 +239,7 @@ if args.aggr:
 # send aggregated weights
 if args.send:
 	start_time = time.perf_counter()
-	server.send()
+	server_send()
 	send_time = time.perf_counter() - start_time
 
 save_times(get_time, aggr_time, send_time)

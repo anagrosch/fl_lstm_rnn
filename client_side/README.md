@@ -25,7 +25,7 @@ Client waits for sampling selection from server.
 If client is not selected, connection is closed.
 
 If client is selected, client continues with steps described in
-[Send section](#send-parameters-to-central-server)
+[Send Parameters To Central Server](#send-parameters-to-central-server)
 
 ### Send Parameters To Central Server
 

@@ -2,8 +2,9 @@ import os
 import time
 import argparse
 import pickle
-import threading
 import random
+import threading
+from _thread import *
 from socket import *
 from os.path import join, exists
 from aggregate import aggr_params, save_times
@@ -124,7 +125,7 @@ class SocketThread(threading.Thread):
 		print("Sent data confirmation to client: {client}".format(client=self.client_info))
 
 
-def init_comm():
+def init_comm(server_port=10800):
 	"""
 	Function to initialize client models for aggregation.
 	"""
@@ -134,7 +135,11 @@ def init_comm():
 
 	info_path = join(os.getcwd(),"outputs","client_info.pkl")
 
-	addr_dict = {}
+	if not exists("outputs"):
+		os.mkdir("outputs")
+		print('Outputs directory created')
+
+	addr_dict = get_dict(info_path)
 
 	serverSocket = socket(AF_INET, SOCK_STREAM)
 	serverSocket.bind((SERVER_IP,server_port))
@@ -161,6 +166,18 @@ def init_comm():
 	print('Client addresses and sampling selections saved to file: /outputs/client_info.pkl')
 
 
+def get_dict(file_path):
+	"""
+	Function to get dictionary from a file.
+	"""
+	if not exists(file_path):
+		dict = {}
+	else:
+		with open(file_path, 'rb') as f:
+			dict = pickle.load(f)
+	return dict
+
+
 def selection_thread(connection, client_info):
 	"""
 	Function to save client ip addresses and set random sampling.
@@ -173,23 +190,12 @@ def selection_thread(connection, client_info):
 	connection.close()
 	print("Connection closed with client: {client}".format(client=client_info))
 
-	return addr_dict
-
 
 def server_get(server_port=10800):
 	"""
 	Function to get client weights with a TCP socket
 	"""
-	print('\n------------------------------------------')
-	print('Waiting for model parameters from clients.')
-	print('------------------------------------------\n')
-
 	info_path = join(os.getcwd(),"outputs","client_info.pkl")
-
-	# create directory to save models to
-	if not exists(MODEL_DIR):
-		os.mkdir(MODEL_DIR)
-		print("Client model directory created.")
 
 	# check if client file exists
 	if not exists(info_path):
@@ -197,9 +203,23 @@ def server_get(server_port=10800):
 		print("Initialize server-client connections with -i or --init flag")
 		raise SystemExit(1)
 
+	print('\n------------------------------------------')
+	print('Waiting for model parameters from clients.')
+	print('------------------------------------------\n')
+
+	# create directory to save models to
+	if not exists(MODEL_DIR):
+		os.mkdir(MODEL_DIR)
+		print("Client model directory created.")
+
 	# get initialized list of client addresses
 	with open(info_path, 'rb') as f:
 		addr_dict = pickle.load(f)
+
+	# set client selection
+	if addr_dict:
+		for client in addr_dict.keys():
+			addr_dict[client] = random.choice([0,1])
 
 	serverSocket = socket(AF_INET,SOCK_STREAM)
 	serverSocket.bind((SERVER_IP,server_port))
@@ -228,10 +248,6 @@ def server_get(server_port=10800):
 			print('Socket closed. Server received no connections.\n')
 			break
 
-	# update client selection
-	for client in addr_dict.keys():
-		addr_dict[client] = random.choice([0,1])
-
 	# write client info dictionary to file
 	with open(info_path, 'wb') as f:
 		pickle.dump(addr_dict, f)
@@ -242,7 +258,6 @@ def server_send(client_port=12000):
 	"""
 	Function to send aggregated weights to clients.
 	"""
-	print('')
 	print('\n--------------------------------------')
 	print('Sending aggregated results to clients.')
 	print('--------------------------------------\n')
@@ -252,8 +267,7 @@ def server_send(client_port=12000):
 	weight_path = join(os.getcwd(),"outputs","final_weights.pkl")
 
 	# get client addresses
-	with open(info_path, 'rb') as f:
-		addr_dict = pickle.load(f)
+	addr_dict = get_dict(info_path)
 
 	# iterate through each client address
 	soc = socket(AF_INET, SOCK_STREAM)
@@ -280,7 +294,7 @@ def server_send(client_port=12000):
 		soc.close()
 		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=client_port))
 
-	print('Aggregated weights sent to all clients')
+	print('\nAggregated weights sent to all clients')
 
 
 def send_chunks(soc, path):
@@ -301,15 +315,20 @@ def send_chunks(soc, path):
 parser = argparse.ArgumentParser(prog='RANDOM SAMPLING SOCKET',
 				 usage='%(prog)s [options]',
 				 description='Basic server socket with random sub-sampling of clients.')
-parser.add_argument('-i', '--init', action='store_true', help='initialize sevrer-client connections')
+parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connections')
 parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from clients')
 parser.add_argument('-a', '--aggr', action='store_true', help='aggregate client weights')
 parser.add_argument('-s', '--send', action='store_true', help='send aggregated results to clients')
 args = parser.parse_args()
 
 if not(args.init or args.get or args.aggr or args.send):
-	print('Error: No action chosen')
-	print('<python3 random_sampling_socket.py --help> for help')
+	print('Error: No action chosen.')
+	print('<python3 random_sampling_server.py --help> for help')
+	raise SystemExit(1)
+
+if (args.init and (args.get or args.aggr or args.send)):
+	print('Error: Cannot run -i/--init with other flags.')
+	print('Run <python3 random_sampling_server.py --init> first')
 	raise SystemExit(1)
 
 # initialize server-client connections
@@ -321,18 +340,22 @@ if args.get:
 	start_time = time.perf_counter()
 	server_get()
 	get_time = time.perf_counter() - start_time
+else: get_time = -1
 
 # aggregate weights
 if args.aggr:
 	start_time = time.perf_counter()
 	aggr_params()
 	aggr_time = time.perf_counter() - start_time
+else: aggr_time = -1
 
 # send aggregated weights
 if args.send:
 	start_time = time.perf_counter()
 	server_send()
 	send_time = time.perf_counter() - start_time
+else: send_time = -1
 
-save_times(get_time, aggr_time, send_time)
+if (args.get or args.aggr or args.send):
+	save_times(get_time, aggr_time, send_time)
 
