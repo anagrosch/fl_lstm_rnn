@@ -23,6 +23,33 @@ redistribution times to a csv file.
 
 ### Basic Socket Program
 
+#### Initialization
+
+Opens server socket and waits for connections from clients to be used for
+aggregation. Saves each client's IP address as a Python dictionary. Each
+key is assigned 0.
+
+The Python dictionary is saved to `/outputs/client_info.pkl`.
+
+Sends the model parameters currently saved to `/outputs/final_weights.pkl` to
+each client.
+
+Must run initialization before collecting client models.
+Only need to run when adding new clients to the approved client dictionary.
+
+Cannot run with another flag set.
+
+This functionality is currently commented out.
+
+To execute, run command:
+```
+python3 basic_server.py --init
+```
+or
+```
+python3 basic_server.py -i
+```
+
 #### Get Client Parameters
 
 When a connection is established between the central server and client(s),
@@ -79,14 +106,17 @@ python3 basic_server.py -s
 
 Opens server socket and waits for connections from clients to be used for
 aggregation. Saves each client's IP address as a Python dictionary. Each
-key is randomly assigned 0 or 1.
-
-A value of 1 means the client's model will be used in the next round of
-aggregation. A value of 0 means the client is not part of the next sample.
+key is assigned 0.
 
 The Python dictionary is saved to `/outputs/client_info.pkl`.
 
+Sends the model parameters currently saved to `/outputs/final_weights.pkl` to
+each client. (This functionality is currently commented out)
+
 Must run initialization before collecting client models.
+Only need to run when adding new clients to the approved client dictionary.
+
+Cannot run with another flag set.
 
 To execute, run command:
 ```
@@ -98,6 +128,13 @@ python3 random_sampling_socket.py -i
 ```
 
 #### Get Client Parameters
+
+Server gets approved client addresses from Python dictionary saved in
+`/outputs/client_info.pkl`. Approximately 2/3 of the clients are chosen
+for the sample, which are then assigned a value of 1.
+
+A value of 1 means the client's model will be used in the next round of
+aggregation. A value of 0 means the client is not part of the next sample.
 
 When a connection is established between the central server and client(s),
 the server checks if the client's IP address is in the dictionary saved to
@@ -111,7 +148,8 @@ If the value saved to the client's IP address is a 1, the server continues
 the steps described in Get Client Parameters in
 [Basic Socket Program](#basic-socket-program).
 
-The values for each client's IP address is reassigned 0's and 1's randomly.
+The values for each client's IP address determined earlier is saved to file
+`/outputs/client_info/pkl`.
 
 To execute, run command:
 ```

@@ -16,6 +16,38 @@ clients. Uses `basic_client.py` as base foundation.
 
 ## Usage
 
+### Initialization
+
+Client connects to server and receives server's current model parameters.
+Parameters saved to `/outputs/best_model_params.pkl`.
+This functionality is currently commented out for
+`random_sampling_client.py`.
+
+Run before any client-server interaction occurs.
+If done before, no need to run again, unless server resets.
+
+Cannot run with another flag set.
+
+This functionality is currently commented out for `basic_client.py`.
+
+To execute with the basic client, run command:
+```
+python3 basic_client.py -init
+```
+or
+```
+python3 basic_client.py -i
+```
+
+To execute with random sub-sampling, run command:
+```
+python3 random_sampling_client.py --init
+```
+or
+```
+python3 random_sampling_client.py -i
+```
+
 ### Random Sub-Sampling
 
 Only applicable for `random_sampling_client.py`.
@@ -34,7 +66,7 @@ as a Python dictionary. Dictionary is sent to the central server in chunks.
 
 Must change `client_ip` to IP address or hostname of client.
 
-To execute the basic client, run command:
+To execute with the basic client, run command:
 ```
 python3 basic_client.py --send
 ```
@@ -61,7 +93,7 @@ Will only accept connections with the server's IP defined by `server_ip`.
 
 This file must be in the same location as the client's model.
 
-To execute the basic client, run command:
+To execute with the basic client, run command:
 ```
 python3 basic_client.py --get
 ```

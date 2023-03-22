@@ -87,6 +87,37 @@ class ClientSocket:
 		print('Sent data confirmation to server.')
 
 
+# for future use
+def init_comm(server_port=10800):
+	"""
+	Function to initialize communication with server.
+	"""
+	print('\n-----------------------------------------')
+	print('Initializing server-client communication.')
+	print('-----------------------------------------\n')
+
+	if not exists("outputs"):
+		os.mkdir("outputs")
+		print('Outputs directory created.')
+
+	clientSocket = socket(AF_INET, SOCK_STREAM)
+	clientSocket.connect((SERVER_IP, server_port))
+	print('Connected to server.')
+
+	# get confirmation from server
+	status = receive_data_from(clientSocket)
+	print("Received status from server: {data}\n".format(data=status))
+
+	# get initial server weights
+	client = ClientSocket(connection=clientSocket,
+			      server_info=(SERVER_IP,server_port),
+			      buffer_size=1024,
+			      recv_timeout=5)
+	client.run()
+	os.rename("tmp.pkl", PARAM_PATH)
+	print('Server parameters saved to file: /outputs/best_model_params.pkl')
+
+
 def client_send(server_port=10800, client_port=12000):
 	"""
 	Function to send trained model and receive updated weights with
@@ -98,7 +129,7 @@ def client_send(server_port=10800, client_port=12000):
 
 	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
 	clientSocket.connect((SERVER_IP, server_port))
-	print('Connected to server')
+	print('Connected to server.')
 
 	# send weights from each parameter file
 	send_chunks(clientSocket, PARAM_PATH)
@@ -114,7 +145,7 @@ def client_send(server_port=10800, client_port=12000):
 	print("Received status from server: {data}\n".format(data=received_data))
 
 	clientSocket.close()
-	print('Client socket closed')
+	print('Client socket closed.')
 
 
 def send_chunks(soc, path):
@@ -142,7 +173,7 @@ def client_get(client_port=12000):
 
 	soc = socket(AF_INET, SOCK_STREAM)
 	soc.bind((CLIENT_IP, client_port))
-	print('Socket created')
+	print('Socket created.')
 
 	soc.listen(1)
 	print('Listening for connection...')
@@ -198,9 +229,15 @@ if __name__ == "__main__":
 	Run basic client-server parameter aggregation.
 	"""
 	parser = argparse.ArgumentParser(prog='CLIENT SOCKET', usage='%(prog)s [options]')
+	#parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connection')
 	parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
 	parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')
 	args = parser.parse_args()
+
+	#if not(args.init or args.send or args.get):
+	if not(args.send or args.get):
+		print('Error: No action chosen.')
+		print('<python3 client_socket.py --help> for help')
 
 	# send trained model parameters to central server
 	if args.send:
@@ -211,6 +248,3 @@ if __name__ == "__main__":
 	if args.get:
 		client_get()
 
-	if not(args.send or args.get):
-		print('Error: No action chosen')
-		print('<python3 client_socket.py --help> for help')

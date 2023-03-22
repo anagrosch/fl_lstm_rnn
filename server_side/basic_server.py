@@ -101,6 +101,83 @@ class SocketThread(threading.Thread):
 		print("Sent data confirmation to client: {client}".format(client=self.client_info))
 
 
+def receive_data_from(soc):
+	"""
+	Function to receive data from socket.
+	"""
+	received_data = b''
+	while str(received_data)[-2] != '.':
+		data = soc.recv(8)
+		receive_data += data
+
+	received_data = pickle.loads(received_data)
+	return received_data
+
+
+def init_comm(server_port=10800):
+	"""
+	Function to initialize client models for aggregation.
+	Add clients to dictionary if already exists.
+	"""
+	print('\n-----------------------------------------')
+	print('Initializing server-client communication.')
+	print('-----------------------------------------\n')
+
+	info_path = join(os.getcwd(),"outputs","client_info.pkl")
+
+	if not exists("outputs"):
+		os.mkdir("outputs")
+		print('Outputs directory created.')
+
+	addr_dict = get_dict(info_path)
+
+	serverSocket = socket(AF_INET, SOCK_STREAM)
+	serverSocket.bind((SERVER_IP, server_port))
+	print('Socket created.')
+
+	serverSocket(1)
+	print('Listening for connection...')
+
+	while True:
+		try:
+			connection, client_info = serverSocket.accept()
+			print("New connection from client: {info}".format(info=client_info))
+
+			addr_dict[client_info[0]] = 0
+
+			start_new_thread(selection_thread,(connection,client_info,))
+		except:
+			serverSocket.close()
+			print('Socket closed. Server received no connections.')
+			break
+
+	with open(info_path, 'wb') as f:
+		pickle.dump(addr_dict, f)
+	print('Client addresses and sampling selections saved to file: /outputs/client_info.pkl')
+
+
+def selection_thread(connection, client_info):
+	"""
+	Function to send clients initial parameters and data confirmation.
+	"""
+	msg = "Client address received."
+	msg = pickle.dumps(msg)
+	connection.sendall(msg)
+	print("Sent info confirmation to client: {client}".format(client=client_info))
+
+	# send initial server weights
+	weight_path = join(os.getcwd(),"outputs","final_weights.pkl")
+	send_chunks(connection, weight_path)
+	print("Server sent weights to client: {client}".format(client=client_info))
+
+	# get client data confirmation
+	status = receive_data_from(connection)
+	print("Received status from client: {data}".format(data=status))
+
+	connection.close()
+	print("Connection closed with client: {client}".format(client=client_info))
+
+
 def server_get(server_port=10800):
 	"""
 	Function to get client weights with a TCP socket
@@ -126,7 +203,7 @@ def server_get(server_port=10800):
 
 	serverSocket = socket(AF_INET,SOCK_STREAM)
 	serverSocket.bind((SERVER_IP,server_port))
-	print('Socket created')
+	print('Socket created.')
 
 	serverSocket.listen(1)
 	print('Listening for connection...')
@@ -160,7 +237,7 @@ def server_send(client_port=12000):
 	Function to send aggregated weights to clients.
 	"""
 	print('\n--------------------------------------')
-	print('Sending aggregated results to clients.')
+	print('Sending aggregated weights to clients.')
 	print('--------------------------------------\n')
 
 	buffer_size = 1024
@@ -179,7 +256,7 @@ def server_send(client_port=12000):
 
 		# send weights to client in chunks
 		send_chunks(soc, weight_path)
-		print("Server send weights to client: ({ip}, {port})".format(ip=ip,port=client_port))
+		print("Server sent weights to client: ({ip}, {port})".format(ip=ip,port=client_port))
 
 		# get confirmation from clients
 		received_data = b''
@@ -193,7 +270,7 @@ def server_send(client_port=12000):
 		soc.close()
 		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=client_port))
 
-	print('Aggregated weights sent to all clients')
+	print('Aggregated weights sent to all clients.')
 
 
 def send_chunks(soc, path):
@@ -214,13 +291,15 @@ def send_chunks(soc, path):
 parser = argparse.ArgumentParser(prog='BASIC SOCKET',
 				 usage='%(prog)s [options]',
 				 description='Basic server socket to get client models and send aggregated weights.')
+#parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connections')
 parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from clients')
 parser.add_argument('-a', '--aggr', action='store_true', help='aggregate client weights')
 parser.add_argument('-s', '--send', action='store_true', help='send aggregated results to clients')
 args = parser.parse_args()
 
+#if not(args.init or args.get or args.aggr or args.send):
 if not(args.get or args.aggr or args.send):
-	print('Error: No action chosen')
+	print('Error: No action chosen.')
 	print('<python3 basic_socket.py --help> for help')
 	raise SystemExit(1)
 
@@ -229,17 +308,21 @@ if args.get:
 	start_time = time.perf_counter()
 	server_get()
 	get_time = time.perf_counter() - start_time
+else: get_time = -1
 
 # aggregate weights
 if args.aggr:
 	start_time = time.perf_counter()
 	aggr_params()
 	aggr_time = time.perf_counter() - start_time
+else: aggr_time = -1
 
 # send aggregated weights
 if args.send:
 	start_time = time.perf_counter()
 	server_send()
 	send_time = time.perf_counter() - start_time
+else: send_time = -1
 
-save_times(get_time, aggr_time, send_time)
+if (args.get or args.aggr or args.send):
+	save_times(get_time, aggr_time, send_time)

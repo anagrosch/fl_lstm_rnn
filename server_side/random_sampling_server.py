@@ -101,18 +101,18 @@ class SocketThread(threading.Thread):
 		Function to check if client is part of sample and send selection result to client.
 		"""
 		if self.addr_dict[self.client_info[0]] == 0:
-			msg = "Not selected for sampling"
+			msg = "Not selected for sampling."
 			msg = pickle.dumps(msg)
 			self.connection.sendall(msg)
-			print("Result sent to client {client}: Not selected for sampling".format(client=self.client_info))
+			print("Result sent to client {client}: Not selected for sampling.".format(client=self.client_info))
 			# close connection
 			self.connection.close()
 			print("Connection closed with {client}".format(client=self.client_info))
 		else:
-			msg = "Selected for sampling"
+			msg = "Selected for sampling."
 			msg = pickle.dumps(msg)
 			self.connection.sendall(msg)
-			print("Result sent to client {client}: Selected for sampling".format(client=self.client_info))
+			print("Result sent to client {client}: Selected for sampling.".format(client=self.client_info))
 
 
 	def confirm_data(self):
@@ -125,45 +125,17 @@ class SocketThread(threading.Thread):
 		print("Sent data confirmation to client: {client}".format(client=self.client_info))
 
 
-def init_comm(server_port=10800):
+def receive_data_from(soc):
 	"""
-	Function to initialize client models for aggregation.
+	Function to receive data from socket.
 	"""
-	print('\n---------------------------------------')
-	print('Initializing server-client communication.')
-	print('----------------------------------------\n')
-
-	info_path = join(os.getcwd(),"outputs","client_info.pkl")
-
-	if not exists("outputs"):
-		os.mkdir("outputs")
-		print('Outputs directory created')
-
-	addr_dict = get_dict(info_path)
-
-	serverSocket = socket(AF_INET, SOCK_STREAM)
-	serverSocket.bind((SERVER_IP,server_port))
-	print('Socket created')
-
-	serverSocket.listen(1)
-	print('Listening for connection...')
-
-	while True:
-		try:
-			connection, client_info = serverSocket.accept()
-			print("New connection from client: {info}.".format(info=client_info))
-
-			addr_dict[client_info[0]] = random.choice([0,1])
-
-			start_new_thread(selection_thread,(connection,client_info,))
-		except:
-			serverSocket.close()
-			print('Socket closed. Server received no connections.')
-			break
-
-	with open(info_path, 'wb') as f:
-		pickle.dump(addr_dict, f)
-	print('Client addresses and sampling selections saved to file: /outputs/client_info.pkl')
+	received_data = b''
+	while str(received_data)[-2] != '.':
+		data = soc.recv(8)
+		received_data += data
+	
+	received_data = pickle.loads(received_data)
+	return received_data
 
 
 def get_dict(file_path):
@@ -178,14 +150,65 @@ def get_dict(file_path):
 	return dict
 
 
+def init_comm(server_port=10800):
+	"""
+	Function to initialize client models for aggregation.
+	Adds clients to dictionary if already exists.
+	"""
+	print('\n-----------------------------------------')
+	print('Initializing server-client communication.')
+	print('-----------------------------------------\n')
+
+	info_path = join(os.getcwd(),"outputs","client_info.pkl")
+
+	if not exists("outputs"):
+		os.mkdir("outputs")
+		print('Outputs directory created.')
+
+	addr_dict = get_dict(info_path)
+
+	serverSocket = socket(AF_INET, SOCK_STREAM)
+	serverSocket.bind((SERVER_IP,server_port))
+	print('Socket created.')
+
+	serverSocket.listen(1)
+	print('Listening for connection...')
+
+	while True:
+		try:
+			connection, client_info = serverSocket.accept()
+			print("New connection from client: {info}".format(info=client_info))
+
+			addr_dict[client_info[0]] = 0
+
+			start_new_thread(selection_thread,(connection,client_info,))
+		except:
+			serverSocket.close()
+			print('Socket closed. Server received no connections.')
+			break
+
+	with open(info_path, 'wb') as f:
+		pickle.dump(addr_dict, f)
+	print('Client addresses and sampling selections saved to file: /outputs/client_info.pkl')
+
+
 def selection_thread(connection, client_info):
 	"""
-	Function to save client ip addresses and set random sampling.
+	Function to send clients initial parameters and data confirmation.
 	"""
-	msg = "Client info received."
+	msg = "Client address received."
 	msg = pickle.dumps(msg)
 	connection.sendall(msg)
-	print("Sent info confirmation to client: {client}.".format(client=client_info))
+	print("Sent info confirmation to client: {client}".format(client=client_info))
+
+	# for future use -> send initial server weights
+	weight_path = join(os.getcwd(),"outputs","final_weights.pkl")
+	send_chunks(connection, weight_path)
+	print("Server sent weights to client: {client}".format(client=client_info))
+	
+	# get client data confirmation
+	status = receive_data_from(connection)
+	print("Received status from client: {data}".format(data=status))
 
 	connection.close()
 	print("Connection closed with client: {client}".format(client=client_info))
@@ -200,7 +223,7 @@ def server_get(server_port=10800):
 	# check if client file exists
 	if not exists(info_path):
 		print("Missing approved list of clients.")
-		print("Initialize server-client connections with -i or --init flag")
+		print("Initialize server-client connections with -i or --init flag.")
 		raise SystemExit(1)
 
 	print('\n------------------------------------------')
@@ -216,14 +239,17 @@ def server_get(server_port=10800):
 	with open(info_path, 'rb') as f:
 		addr_dict = pickle.load(f)
 
-	# set client selection
-	if addr_dict:
-		for client in addr_dict.keys():
-			addr_dict[client] = random.choice([0,1])
+	# set list of client selection
+	sample_length = round(len(addr_dict) * 2/3) #number of clients to be selected
+	sample_list = random.sample(list(addr_dict.keys()), sample_length) #list of selected clients
+	
+	# update selection results in dictionary
+	for client in sample_list:
+		addr_dict[client] = 1
 
 	serverSocket = socket(AF_INET,SOCK_STREAM)
 	serverSocket.bind((SERVER_IP,server_port))
-	print('Socket created')
+	print('Socket created.')
 
 	serverSocket.listen(1)
 	print('Listening for connection...')
@@ -232,7 +258,7 @@ def server_get(server_port=10800):
 		try:
 			connection, client_info = serverSocket.accept()
 			if client_info[0] not in addr_dict.keys():
-				print("Unauthorized client attempting to connect.")
+				print('Unauthorized client attempting to connect.')
 				continue
 			print("New connection from client: {client_info}".format(client_info=client_info))
 
@@ -259,7 +285,7 @@ def server_send(client_port=12000):
 	Function to send aggregated weights to clients.
 	"""
 	print('\n--------------------------------------')
-	print('Sending aggregated results to clients.')
+	print('Sending aggregated weights to clients.')
 	print('--------------------------------------\n')
 
 	buffer_size = 1024
@@ -280,21 +306,16 @@ def server_send(client_port=12000):
 
 		# send weights to client in chunks
 		send_chunks(soc, weight_path)
-		print("Server send weights to client: ({ip}, {port})".format(ip=ip,port=client_port))
+		print("Server sent weights to client: ({ip}, {port})".format(ip=ip,port=client_port))
 
 		# get confirmation from clients
-		received_data = b''
-		while str(received_data)[-2] != '.':
-			data = soc.recv(8)
-			received_data += data
-
-		received_data = pickle.loads(received_data)
-		print("Received status from ({ip}, {port}): {data}\n".format(ip=ip,port=client_port,data=received_data))
+		status = receive_data_from(soc)
+		print("Received status from ({ip}, {port}): {data}\n".format(ip=ip,port=client_port,data=status))
 
 		soc.close()
 		print("Socket closed with client: ({ip}, {port})".format(ip=ip, port=client_port))
 
-	print('\nAggregated weights sent to all clients')
+	print('\nAggregated weights sent to all clients.')
 
 
 def send_chunks(soc, path):

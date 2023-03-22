@@ -3,10 +3,11 @@ import time
 import pickle
 import argparse
 from socket import *
+from os.path import join, exists
 
 SERVER_IP = "127.0.0.1" #change to server's public ip address
 CLIENT_IP = "127.0.0.1" #change to client's public ip address
-PARAM_PATH = os.path.join(os.getcwd(), "outputs", "best_model_params.pkl")
+PARAM_PATH = join(os.getcwd(), "outputs", "best_model_params.pkl")
 
 class ClientSocket:
 	"""
@@ -108,16 +109,31 @@ def init_comm(server_port=10800):
 	print('Initializing server-client communication.')
 	print('-----------------------------------------\n')
 
+	if not exists("outputs"):
+		os.mkdir("outputs")
+		print('Outputs directory created.')
+
 	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
 	clientSocket.connect((SERVER_IP, server_port))
-	print('Connected to server')
+	print('Connected to server.')
 
 	# get confirmation from server
 	status = receive_data_from(clientSocket)
 	print("Received status from server: {data}\n".format(data=status))
 
+	"""
+	# for future use -> get initial server weights
+	client = ClientSocket(connection=clientSocket,
+			      server_info=(SERVER_IP,server_port),
+			      buffer_size=1024,
+			      recv_timeout=5)
+	client.run()
+	os.rename("tmp.pkl", PARAM_PATH)
+	print('Server parameters saved to file: /outputs/best_model_params.pkl')
+	"""
+
 	clientSocket.close()
-	print('Client socket closed')
+	print('Client socket closed.')
 
 
 def client_send(server_port=10800):
@@ -131,7 +147,7 @@ def client_send(server_port=10800):
 
 	clientSocket = socket(AF_INET, SOCK_STREAM) #IPv4, TCP
 	clientSocket.connect((SERVER_IP, server_port))
-	print('Connected to server')
+	print('Connected to server.')
 
 	# get selection status from server
 	status = receive_data_from(clientSocket)
@@ -147,7 +163,7 @@ def client_send(server_port=10800):
 		print("Received status from server: {data}\n".format(data=status))
 
 	clientSocket.close()
-	print('Client socket closed')
+	print('Client socket closed.')
 
 
 def send_chunks(soc, path):
@@ -175,7 +191,7 @@ def client_get(client_port=12000):
 
 	soc = socket(AF_INET, SOCK_STREAM)
 	soc.bind((CLIENT_IP, client_port))
-	print('Socket created')
+	print('Socket created.')
 
 	soc.listen(1)
 	print('Listening for connection...')
@@ -202,7 +218,7 @@ def client_get(client_port=12000):
 		print('Socket closed.')
 
 	update_params()
-	print("Local parameters updated.")
+	print('Local parameters updated.')
 
 
 def update_params():
@@ -217,7 +233,7 @@ def update_params():
 		# get local params
 		dict = pickle.load(f)
 
-	for weight in dict.keys():
+	for weight in tmp_dict.keys():
 		dict[weight] = (dict[weight] + tmp_dict[weight])/2
 
 	with open(PARAM_PATH, 'wb') as f:
