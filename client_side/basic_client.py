@@ -87,6 +87,7 @@ class ClientSocket:
 		print('Sent data confirmation to server.')
 
 
+"""
 # for future use
 def init_comm(server_port=10800):
 	"""
@@ -116,6 +117,7 @@ def init_comm(server_port=10800):
 	client.run()
 	os.rename("tmp.pkl", PARAM_PATH)
 	print('Server parameters saved to file: /outputs/best_model_params.pkl')
+"""
 
 
 def client_send(server_port=10800, client_port=12000):
@@ -238,6 +240,12 @@ if __name__ == "__main__":
 	if not(args.send or args.get):
 		print('Error: No action chosen.')
 		print('<python3 client_socket.py --help> for help')
+
+	"""
+	# initialize server-client communication
+	if args.init:
+		init_comm()
+	"""
 
 	# send trained model parameters to central server
 	if args.send:

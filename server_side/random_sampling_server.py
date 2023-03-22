@@ -201,6 +201,7 @@ def selection_thread(connection, client_info):
 	connection.sendall(msg)
 	print("Sent info confirmation to client: {client}".format(client=client_info))
 
+	"""
 	# for future use -> send initial server weights
 	weight_path = join(os.getcwd(),"outputs","final_weights.pkl")
 	send_chunks(connection, weight_path)
@@ -209,6 +210,7 @@ def selection_thread(connection, client_info):
 	# get client data confirmation
 	status = receive_data_from(connection)
 	print("Received status from client: {data}".format(data=status))
+	"""
 
 	connection.close()
 	print("Connection closed with client: {client}".format(client=client_info))

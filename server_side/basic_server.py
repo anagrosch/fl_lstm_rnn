@@ -114,6 +114,8 @@ def receive_data_from(soc):
 	return received_data
 
 
+"""
+# for future use
 def init_comm(server_port=10800):
 	"""
 	Function to initialize client models for aggregation.
@@ -176,6 +178,7 @@ def selection_thread(connection, client_info):
 
 	connection.close()
 	print("Connection closed with client: {client}".format(client=client_info))
+"""
 
 
 def server_get(server_port=10800):
@@ -302,6 +305,12 @@ if not(args.get or args.aggr or args.send):
 	print('Error: No action chosen.')
 	print('<python3 basic_socket.py --help> for help')
 	raise SystemExit(1)
+
+"""
+# initialize server-client communication
+if args.init:
+	init_comm()
+"""
 
 # get trained models from clients
 if args.get:
