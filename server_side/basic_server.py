@@ -117,10 +117,10 @@ def receive_data_from(soc):
 """
 # for future use
 def init_comm(server_port=10800):
-	"""
+	#
 	Function to initialize client models for aggregation.
 	Add clients to dictionary if already exists.
-	"""
+	#
 	print('\n-----------------------------------------')
 	print('Initializing server-client communication.')
 	print('-----------------------------------------\n')
@@ -159,9 +159,9 @@ def init_comm(server_port=10800):
 
 
 def selection_thread(connection, client_info):
-	"""
+	#
 	Function to send clients initial parameters and data confirmation.
-	"""
+	#
 	msg = "Client address received."
 	msg = pickle.dumps(msg)
 	connection.sendall(msg)

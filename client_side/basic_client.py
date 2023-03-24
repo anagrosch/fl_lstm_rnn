@@ -90,9 +90,9 @@ class ClientSocket:
 """
 # for future use
 def init_comm(server_port=10800):
-	"""
+	#
 	Function to initialize communication with server.
-	"""
+	#
 	print('\n-----------------------------------------')
 	print('Initializing server-client communication.')
 	print('-----------------------------------------\n')
