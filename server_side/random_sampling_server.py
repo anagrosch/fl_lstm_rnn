@@ -362,21 +362,21 @@ if args.init:
 if args.get:
 	start_time = time.perf_counter()
 	server_get()
-	get_time = time.perf_counter() - start_time
+	get_time = (time.perf_counter() - start_time)/60
 else: get_time = -1
 
 # aggregate weights
 if args.aggr:
 	start_time = time.perf_counter()
 	aggr_params()
-	aggr_time = time.perf_counter() - start_time
+	aggr_time = (time.perf_counter() - start_time)/60
 else: aggr_time = -1
 
 # send aggregated weights
 if args.send:
 	start_time = time.perf_counter()
 	server_send()
-	send_time = time.perf_counter() - start_time
+	send_time = (time.perf_counter() - start_time)/60
 else: send_time = -1
 
 if (args.get or args.aggr or args.send):

@@ -7,7 +7,7 @@ from socket import *
 from os.path import join, exists
 from aggregate import aggr_params, save_times
 
-SERVER_IP = "127.0.0.1" #change to server's public ip address
+SERVER_IP = "172.18.28.104" #change to server's public ip address
 MODEL_DIR = join(os.getcwd(), "client_models")
 
 class SocketThread(threading.Thread):
@@ -207,6 +207,7 @@ def server_get(server_port=10800):
 	serverSocket = socket(AF_INET,SOCK_STREAM)
 	serverSocket.bind((SERVER_IP,server_port))
 	print('Socket created.')
+	print(SERVER_IP)
 
 	serverSocket.listen(1)
 	print('Listening for connection...')
@@ -316,21 +317,21 @@ if args.init:
 if args.get:
 	start_time = time.perf_counter()
 	server_get()
-	get_time = time.perf_counter() - start_time
+	get_time = (time.perf_counter() - start_time)/60
 else: get_time = -1
 
 # aggregate weights
 if args.aggr:
 	start_time = time.perf_counter()
 	aggr_params()
-	aggr_time = time.perf_counter() - start_time
+	aggr_time = (time.perf_counter() - start_time)/60
 else: aggr_time = -1
 
 # send aggregated weights
 if args.send:
 	start_time = time.perf_counter()
 	server_send()
-	send_time = time.perf_counter() - start_time
+	send_time = (time.perf_counter() - start_time)/60
 else: send_time = -1
 
 if (args.get or args.aggr or args.send):
