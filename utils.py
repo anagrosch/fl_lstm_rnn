@@ -53,8 +53,8 @@ def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time):
 
 	# loss plots
 	plt.figure(figsize=(10,7))
-	plt.plot(train_loss, color='a4d5dc', linestyle='-', label='train loss')
-	plt.plot(valid_loss, color='b5b9ff', linestyle='-', label='validation loss')
+	plt.plot(train_loss, color='#a4d5dc', linestyle='-', label='train loss')
+	plt.plot(valid_loss, color='#b5b9ff', linestyle='-', label='validation loss')
 	plt.xlabel('Epochs')
 	plt.ylabel('Loss')
 	plt.legend()
@@ -62,8 +62,8 @@ def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time):
 
 	# accuracy plots
 	plt.figure(figsize=(10,7))
-	plt.plot(train_acc, color='a4d5dc', linestyle='-', label='train accuracy')
-	plt.plot(valid_acc, color='b5b9ff', linestyle='-', label='validation accuracy')
+	plt.plot(train_acc, color='#a4d5dc', linestyle='-', label='train accuracy')
+	plt.plot(valid_acc, color='#b5b9ff', linestyle='-', label='validation accuracy')
 	plt.xlabel('Epochs')
 	plt.ylabel('Accuracy')
 	plt.legend()

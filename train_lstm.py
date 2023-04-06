@@ -63,7 +63,7 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 	"""
 	model.train()
 	
-	counter = 0
+	total = 0
 	running_loss = 0.0
 	running_acc = 0.0
 	dataloader = DataLoader(dataset, batch_size=args.batch_size)
@@ -71,14 +71,10 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 	state_h, state_c = model.init_state(args.sequence_length)
 
 	for batch, (x, y) in enumerate(dataloader):
-		counter += 1
 		optimizer.zero_grad()	#clear existing gradients of previous epoch
 			
 		y_pred, (state_h, state_c) = model(x, (state_h, state_c))
 		loss = criterion(y_pred.transpose(1, 2), y)
-		running_loss += loss.item()
-		acc = accuracy_score(y, y_pred.transpose(1, 2))
-		running_acc += acc
 
 		state_h = state_h.detach()
 		state_c = state_c.detach()
@@ -86,10 +82,15 @@ def train_epoch(dataset, criterion, optimizer, model, epoch, args):
 		loss.backward()		#backpropagation & calculate gradients
 		optimizer.step()	#update weights
 
+		running_loss += loss.item()
+		classes = torch.argmax(y_pred.transpose(1, 2), dim=1)
+		acc = np.mean([float(classes.flatten()[label] == y.flatten()[label]) for label in range(torch.numel(y))])
+		running_acc += acc
+
 		print({ 'epoch': epoch, 'batch': batch, 'loss': loss.item(), 'accuracy': acc })
 
-	epoch_loss = running_loss/counter
-	epoch_acc = running_acc/counter
+	epoch_loss = running_loss/len(dataloader)
+	epoch_acc = running_acc/len(dataloader)
 	return epoch_loss, epoch_acc
 
 
@@ -99,7 +100,6 @@ def validate(dataset, criterion, model, args):
 	"""
 	model.eval()
 
-	counter = 0
 	running_loss = 0.0
 	running_acc = 0.0
 	dataloader = DataLoader(dataset, batch_size=args.batch_size)
@@ -108,14 +108,14 @@ def validate(dataset, criterion, model, args):
 
 	with torch.no_grad():
 		for batch, (x, y) in enumerate(dataloader):
-			counter += 1
 			y_pred, (state_h, state_c) = model(x, (state_h, state_c))
 			loss = criterion(y_pred.transpose(1, 2), y)
 			running_loss += loss.item()
-			running_acc += accuracy_score(y, y_pred.transpose(1,2))
+			classes = torch.argmax(y_pred.transpose(1, 2), dim=1)
+			running_acc += np.mean([float(classes.flatten()[label] == y.flatten()[label]) for label in range(torch.numel(y))])
 
-	epoch_loss = running_loss/counter
-	epoch_acc = running_acc/counter
+	epoch_loss = running_loss/len(dataloader)
+	epoch_acc = running_acc/len(dataloader)
 	return epoch_loss, epoch_acc
 
 
@@ -142,7 +142,7 @@ def predict(dataset, model, optimizer, args):
 # main function
 parser = argparse.ArgumentParser(prog='TRAIN_LSTM', usage='%(prog)s [options]')
 parser.add_argument('-me', '--max-epochs', type=int, default=32)
-parser.add_argument('-bs', '--batch-size', type=int, default=64)
+parser.add_argument('-bs', '--batch_size', type=int, default=256)
 parser.add_argument('-sl', '--sequence-length', type=int, default=4)
 parser.add_argument('-cf', '--csv-file', type=valid_file, default='data/reddit-cleanjokes.csv')
 parser.add_argument('-t', '--train', action='store_true')
@@ -152,8 +152,8 @@ parser.add_argument('-ps', '--predict-size', type=int, default=100)
 args = parser.parse_args()
 
 # get training and validation datasets
-train_data = Dataset(0.4, args)
-valid_data = Dataset(0.4, args, train=False)
+train_data = Dataset(0.005, args)
+valid_data = Dataset(0.005, args, train=False)
 
 model = Model(train_data)
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
@@ -164,6 +164,7 @@ try:
 	model = update_params(model)
 except:
 	print('Cannot load best model. Continuing with untrained model.')
+
 
 # train model
 if args.train:
