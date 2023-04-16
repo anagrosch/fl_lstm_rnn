@@ -4,6 +4,7 @@ import pickle
 import argparse
 from socket import *
 from os.path import join, exists
+from utils import update_params
 
 SERVER_IP = "127.0.0.1" #change to server's public ip address
 CLIENT_IP = "127.0.0.1" #change to client's public ip address
@@ -219,27 +220,6 @@ def client_get(client_port=12000):
 
 	update_params()
 	print('Local parameters updated.')
-
-
-def update_params():
-	"""
-	Function to average aggregated params from server with local params.
-	"""
-	with open("tmp.pkl", 'rb') as f:
-		# get aggregated params
-		tmp_dict = pickle.load(f)
-
-	with open(PARAM_PATH, 'rb') as f:
-		# get local params
-		dict = pickle.load(f)
-
-	for weight in tmp_dict.keys():
-		dict[weight] = (dict[weight] + tmp_dict[weight])/2
-
-	with open(PARAM_PATH, 'wb') as f:
-		pickle.dump(dict, f)
-
-	os.remove("tmp.pkl")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ waits for aggregated results.
 
 ## Project Files
 
-This folder has the following file:
+This folder has the following files:
 
 - `basic_client.py`: Client app to send client's trained model
 parameters to the central server. Waits for aggregated results
