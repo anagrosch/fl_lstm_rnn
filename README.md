@@ -90,6 +90,10 @@ pip3 install websocket-client
 
 - [PyTorch LSTM: Text Generation Tutorial](https://www.kdnuggets.com/2020/07/pytorch-lstm-text-generation-tutorial.html)
 
+- [Fine-Tuning](https://d2l.ai/chapter_computer-vision/fine-tuning.html)
+
+- [Finetuning Torchvision Models](https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html)
+
 - [Difference Between PyTorch and PySyft](https://analyticsindiamag.com/difference-between-pytorch-and-pysyft/)
 
 - [A Step by Step guide to installing PyTorch in Raspberry Pi](https://medium.com/secure-and-private-ai-writing-challenge/a-step-by-step-guide-to-installing-pytorch-in-raspberry-pi-a1491bb80531)

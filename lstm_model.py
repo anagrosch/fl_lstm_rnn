@@ -2,17 +2,19 @@
 
 import torch
 import torch.nn as nn
+import math
+from torch import nn, optim
 
 class Model(nn.Module):
-	def __init__(self, dataset):
+	def __init__(self, n_vocab):
 		super(Model, self).__init__()
 		self.lstm_size = 128
-		self.embedding_dim = 128
+		self.embedding_dim = 128 
 		self.num_layers = 3
+		self.n_vocab = n_vocab
 
-		n_vocab = len(dataset.uniq_words)
 		self.embedding = nn.Embedding(
-			num_embeddings=n_vocab, 
+			num_embeddings=self.n_vocab, 
 			embedding_dim=self.embedding_dim,
 		)
 		self.lstm = nn.LSTM(
@@ -21,7 +23,7 @@ class Model(nn.Module):
 			num_layers=self.num_layers,
 			dropout=0.2,
 		)
-		self.fc = nn.Linear(self.lstm_size, n_vocab)
+		self.fc = nn.Linear(self.lstm_size, self.n_vocab)
 
 	def forward(self, x, prev_state):
 		embed = self.embedding(x)
