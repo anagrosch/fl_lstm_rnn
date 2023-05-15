@@ -100,7 +100,7 @@ def update_params():
 	Updates both model parameters file and model checkpoint.
 	"""
 	param_path = join(os.getcwd(), "outputs", "best_model_params.pkl")
-	model_path = join(os,getcwd(), "outputs", "best_model.pth")
+	model_path = join(os.getcwd(), "outputs", "best_model.pth")
 
 	with open("tmp.pkl", 'rb') as f:
 		# get aggregated params

@@ -33,28 +33,52 @@ The model parameters are saved as a Python dictionary in `/outputs/best_model_pa
 
 ### Install Pytorch
 
-PyPi does not have an official PyTorch package for ARM architectures (Raspberry Pi). There are
-a few different ways to download and install PyTorch. We're going to focus on installing PyTorch
-with a pre-compiled wheel file. Here is an
-[arm71 compatible wheel file](https://drive.google.com/file/d/1D3A5YSWiY-EnRWzWbzSqvj4YdY90wuXq/view).
+PyPi does not have an official PyTorch package for ARM architectures (Raspberry Pi), but there are
+a few different ways to download and install PyTorch. This guides you to install PyTorch with a
+pre-compiled wheel file.
 
 To know which wheel file to download, you can check the pi's compatible version of processor
-architecture (i.e. armv71).
-```
-uname -a
-```
-Install PyTorch dependencies.
+architecture (i.e. armv71) using the command `uname -a`.
+
+You must also ensure the gcc version matches the processor architecture with the command `gcc -v`.
+
+Buster OS and Bullseye OS were used in this project, so the steps to install
+PyTorch on both OS types are provided below.
+
+#### Buster OS
+
+1. Install PyTorch dependencies.
 ```
 sudo apt install libopenblas-dev m4 cmake cython python3-dev python3-yaml python3-setuptools
 ```
-Download the [wheel file](https://drive.google.com/file/d/1D3A5YSWiY-EnRWzWbzSqvj4YdY90wuXq/view) onto
+2. Download the [wheel file](https://drive.google.com/file/d/1D3A5YSWiY-EnRWzWbzSqvj4YdY90wuXq/view) onto
 your pi.
 
-Go to the directory with the wheel file.
+3. Go to the directory with the wheel file.
 
-Install PyTorch.
+4. Install PyTorch.
 ```
 pip3 install <torch_file_name.whl>
+```
+
+#### Bullseye OS
+
+1. Install PyTorch dependencies.
+```
+sudo apt-get install python3-pip libjpeg-dev libopenblas-dev libopenmpi-dev libomp-dev
+```
+```
+sudo -H pip3 install setuptools==58.3.0
+sudo -H pip3 Cython
+```
+2. Download the [wheel file](https://drive.google.com/uc?id=1uLkZzUdx3LiJC-Sy_ofTACfHgFprumSg) onto
+your pi.
+
+3. Go to the directory with the wheel file.
+
+4. Install PyTorch.
+```
+sudo -H pip3 install <torch_file_name.whl>
 ```
 
 To check if installation was successful, run:
@@ -63,25 +87,11 @@ python3
 import torch
 ```
 
-### Install PySyft
+### Install Project Dependencies
 
-Install PyAV version 8.0.0 (or newer).
+Install necessary dependencies for the LSTM RNN model with the following command:
 ```
-sudo apt install -y libavdevice-dev
-pip3 install av >=8.0.0
-```
-Install additional PySyft dependencies.
-```
-sudo apt install libavfilter-dev libopus-dev libvpx-dev pkg-config
-pip3 install toml
-pip3 install cffi==1.15.0
-```
-Go to the [rustup website](rustup.rs) and follow the directions for installation. Close the terminal
-after installing.
-```
-pip install --upgrade pip
-python3 -m pip install sycret
-pip3 install websocket-client
+pip3 install -r requirements.txt
 ```
 
 ## Resources
@@ -96,6 +106,6 @@ pip3 install websocket-client
 
 - [Difference Between PyTorch and PySyft](https://analyticsindiamag.com/difference-between-pytorch-and-pysyft/)
 
-- [A Step by Step guide to installing PyTorch in Raspberry Pi](https://medium.com/secure-and-private-ai-writing-challenge/a-step-by-step-guide-to-installing-pytorch-in-raspberry-pi-a1491bb80531)
+- [Install PyTorch on a Raspberry Pi 4](https://qengineering.eu/install-pytorch-on-raspberry-pi-4.html)
 
-- [A Step by Step guide to installing PySyft in Raspberry Pi](https://medium.com/secure-and-private-ai-writing-challenge/a-step-by-step-guide-to-installing-pysyft-in-raspberry-pi-d8d10c440c37)
+- [A Step by Step guide to installing PyTorch in Raspberry Pi](https://medium.com/secure-and-private-ai-writing-challenge/a-step-by-step-guide-to-installing-pytorch-in-raspberry-pi-a1491bb80531)
