@@ -1,7 +1,8 @@
+import csv
 import os
 import pickle
-import csv
 import shutil
+import torch
 from datetime import date
 from os.path import join, isfile, exists, getsize
 
@@ -38,6 +39,8 @@ def aggr_params():
 			# aggregate params
 			for weight in tmp_dict.keys():
 				if weight in param_dict:
+					# set weight tensor to equal sizes
+					tmp_dict[weight], param_dict[weight] = resize_tensor(tmp_dict[weight], param_dict[weight])
 					param_dict[weight] += tmp_dict[weight]
 				if weight not in param_dict:
 					param_dict[weight] = tmp_dict[weight]
@@ -72,6 +75,27 @@ def get_dict(file_path, file_count=1):
 		for weight in dict.keys():
 			dict[weight] = dict[weight] / file_count
 	return dict, file_count
+
+
+def resize_tensor(tensor1, tensor2):
+	"""
+	Function to set two tensors to the same size.
+	Fills smaller tensor with random initializer.
+	tensor1 is the smaller tensor
+	"""
+	if tensor1.shape > tensor2.shape: #ensure tensor1 is smaller
+		tensor2, tensor1 = resize_tensor(tensor2, tensor1)
+	
+	elif tensor1.shape < tensor2.shape:
+		if len(tensor2.shape) == 1:
+			tmp = torch.empty(tensor2.shape[0]-tensor1.shape[0])
+			torch.nn.init.uniform_(tmp)
+		else:
+			tmp = torch.empty(tensor2.shape[0]-tensor1.shape[0], tensor2.shape[1])
+			torch.nn.init.xavier_uniform_(tmp)
+
+		tensor1 = torch.cat((tensor1,tmp),0)
+	return tensor1, tensor2
 
 
 def save_times(get_time=-1, aggr_time=-1, send_time=-1):

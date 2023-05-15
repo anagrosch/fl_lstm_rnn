@@ -19,6 +19,13 @@ clients. Uses `basic_server.py` as base foundation.
 the final results to a local file. Saves collection, aggregation, and
 redistribution times to a csv file.
 
+## Setup
+
+Install PyTorch using the following command:
+```
+pip3 install torch torchvision torchaudio
+```
+
 ## Usage
 
 ### Basic Socket Program

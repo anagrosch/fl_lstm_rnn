@@ -7,7 +7,7 @@ from socket import *
 from os.path import join, exists
 from aggregate import aggr_params, save_times
 
-SERVER_IP = "172.18.28.104" #change to server's public ip address
+SERVER_IP = "192.168.10.220" #change to server's public ip address
 MODEL_DIR = join(os.getcwd(), "client_models")
 
 class SocketThread(threading.Thread):
