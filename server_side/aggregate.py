@@ -80,8 +80,7 @@ def get_dict(file_path, file_count=1):
 def resize_tensor(tensor1, tensor2):
 	"""
 	Function to set two tensors to the same size.
-	Fills smaller tensor with random initializer.
-	tensor1 is the smaller tensor
+	Fills smaller tensor (tensor1) with random initializer.
 	"""
 	if tensor1.shape > tensor2.shape: #ensure tensor1 is smaller
 		tensor2, tensor1 = resize_tensor(tensor2, tensor1)

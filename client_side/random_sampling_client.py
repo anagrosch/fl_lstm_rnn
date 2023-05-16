@@ -226,7 +226,9 @@ if __name__ == "__main__":
 	"""
 	Run basic client-server parameter aggregation.
 	"""
-	parser = argparse.ArgumentParser(prog='CLIENT SOCKET', usage='%(prog)s [options]')
+	parser = argparse.ArgumentParser(prog='CLIENT SOCKET',
+					 usage='%(prog)s [options]',
+					 description="Basic client socket with random sub-sampling of clients.')
 	parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connection')
 	parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
 	parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')

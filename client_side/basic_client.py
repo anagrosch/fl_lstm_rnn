@@ -88,17 +88,16 @@ class ClientSocket:
 		print('Sent data confirmation to server.')
 
 
-"""
-# for future use
+# for future use -> initialize new clients with server weights
 def init_comm(server_port=10800):
-	#
+	"""
 	Function to initialize communication with server.
-	#
+	"""
 	print('\n-----------------------------------------')
 	print('Initializing server-client communication.')
 	print('-----------------------------------------\n')
 
-	if not exists("outputs"):
+	if not os.path.exists("outputs"):
 		os.mkdir("outputs")
 		print('Outputs directory created.')
 
@@ -107,7 +106,11 @@ def init_comm(server_port=10800):
 	print('Connected to server.')
 
 	# get confirmation from server
-	status = receive_data_from(clientSocket)
+	status = b''
+	while str(status)[-2] != '.':
+		data = clientSocket.recv(8)
+		status += data
+	status = pickle.loads(status)
 	print("Received status from server: {data}\n".format(data=status))
 
 	# get initial server weights
@@ -118,7 +121,6 @@ def init_comm(server_port=10800):
 	client.run()
 	os.rename("tmp.pkl", PARAM_PATH)
 	print('Server parameters saved to file: /outputs/best_model_params.pkl')
-"""
 
 
 def client_send(server_port=10800, client_port=12000):
@@ -210,27 +212,26 @@ if __name__ == "__main__":
 	"""
 	Run basic client-server parameter aggregation.
 	"""
-	parser = argparse.ArgumentParser(prog='CLIENT SOCKET', usage='%(prog)s [options]')
-	#parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connection')
+	parser = argparse.ArgumentParser(prog='CLIENT SOCKET',
+					 usage='%(prog)s [options]',
+					 description='Basic client socket to send local weights to server for aggregation.')
+	parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connection')
 	parser.add_argument('-s', '--send', action='store_true', help='send local model parameters to server')
 	parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from server')
 	args = parser.parse_args()
 
-	#if not(args.init or args.send or args.get):
-	if not(args.send or args.get):
+	if not(args.init or args.send or args.get):
 		print('Error: No action chosen.')
-		print('<python3 client_socket.py --help> for help')
+		print('Run <python3 basic_client.py --help> for help')
 
-	"""
 	if (args.init and (args.send or args.get)):
-		printf('Error: Cannot run -i/--init with other flags.')
-		printf('Run <python3 basic_client.py --init> first')
+		print('Error: Cannot run -i/--init with other flags.')
+		print('Run <python3 basic_client.py --init> first')
 		raise SystemExit(1)
 
 	# initialize server-client communication
 	if args.init:
 		init_comm()
-	"""
 
 	# send trained model parameters to central server
 	if args.send:

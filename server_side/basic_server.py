@@ -7,7 +7,7 @@ from socket import *
 from os.path import join, exists
 from aggregate import aggr_params, save_times
 
-SERVER_IP = "192.168.10.220" #change to server's public ip address
+SERVER_IP = "127.0.0.1" #change to server's public ip address
 MODEL_DIR = join(os.getcwd(), "client_models")
 
 class SocketThread(threading.Thread):
@@ -108,19 +108,30 @@ def receive_data_from(soc):
 	received_data = b''
 	while str(received_data)[-2] != '.':
 		data = soc.recv(8)
-		receive_data += data
+		received_data += data
 
 	received_data = pickle.loads(received_data)
 	return received_data
 
 
-"""
-# for future use
+def get_dict(file_path):
+	"""
+	Function to get client info dictionary from a file.
+	"""
+	if not exists(file_path):
+		dict = {}
+	else:
+		with open(file_path, 'rb') as f:
+			dict = pickle.load(f)
+	return dict
+
+
+# for future use -> initialize new clients with server weights
 def init_comm(server_port=10800):
-	#
+	"""
 	Function to initialize client models for aggregation.
 	Add clients to dictionary if already exists.
-	#
+	"""
 	print('\n-----------------------------------------')
 	print('Initializing server-client communication.')
 	print('-----------------------------------------\n')
@@ -128,8 +139,8 @@ def init_comm(server_port=10800):
 	info_path = join(os.getcwd(),"outputs","client_info.pkl")
 
 	if not exists("outputs"):
-		os.mkdir("outputs")
-		print('Outputs directory created.')
+		print("Weights file does not exist. Cannot run --init/-i flag.")
+		raise SystemExit(1)
 
 	addr_dict = get_dict(info_path)
 
@@ -137,7 +148,7 @@ def init_comm(server_port=10800):
 	serverSocket.bind((SERVER_IP, server_port))
 	print('Socket created.')
 
-	serverSocket(1)
+	serverSocket.listen(1)
 	print('Listening for connection...')
 
 	while True:
@@ -147,10 +158,11 @@ def init_comm(server_port=10800):
 
 			addr_dict[client_info[0]] = 0
 
-			start_new_thread(selection_thread,(connection,client_info,))
+			client_thread = threading.Thread(target=selection_thread, args=(connection, client_info,))
+			client_thread.start()
 		except:
 			serverSocket.close()
-			print('Socket closed. Server received no connections.')
+			print('Socket closed due to inactivity or error.')
 			break
 
 	with open(info_path, 'wb') as f:
@@ -159,9 +171,9 @@ def init_comm(server_port=10800):
 
 
 def selection_thread(connection, client_info):
-	#
+	"""
 	Function to send clients initial parameters and data confirmation.
-	#
+	"""
 	msg = "Client address received."
 	msg = pickle.dumps(msg)
 	connection.sendall(msg)
@@ -178,7 +190,6 @@ def selection_thread(connection, client_info):
 
 	connection.close()
 	print("Connection closed with client: {client}".format(client=client_info))
-"""
 
 
 def server_get(server_port=10800):
@@ -253,10 +264,15 @@ def server_send(client_port=12000):
 		addr_dict = pickle.load(f)
 
 	# iterate through each client address
-	soc = socket(AF_INET, SOCK_STREAM)
 	for ip in addr_dict.keys():
-		soc.connect((ip, client_port))
-		print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
+		try:
+			soc = socket(AF_INET, SOCK_STREAM)
+			soc.connect((str(ip), client_port))
+			print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
+		except:
+			print("Client ({ip}, {port}) unavailable.".format(ip=ip, port=client_port))
+			print("Continuing to next client...\n")
+			continue
 
 		# send weights to client in chunks
 		send_chunks(soc, weight_path)
@@ -295,23 +311,25 @@ def send_chunks(soc, path):
 parser = argparse.ArgumentParser(prog='BASIC SOCKET',
 				 usage='%(prog)s [options]',
 				 description='Basic server socket to get client models and send aggregated weights.')
-#parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connections')
+parser.add_argument('-i', '--init', action='store_true', help='initialize server-client connections')
 parser.add_argument('-g', '--get', action='store_true', help='start socket to get data from clients')
 parser.add_argument('-a', '--aggr', action='store_true', help='aggregate client weights')
 parser.add_argument('-s', '--send', action='store_true', help='send aggregated results to clients')
 args = parser.parse_args()
 
-#if not(args.init or args.get or args.aggr or args.send):
-if not(args.get or args.aggr or args.send):
+if not(args.init or args.get or args.aggr or args.send):
 	print('Error: No action chosen.')
-	print('<python3 basic_socket.py --help> for help')
+	print('Run <python3 basic_server.py --help> for help')
 	raise SystemExit(1)
 
-"""
+if (args.init and (args.get or args.aggr or args.send)):
+	print('Error: Cannot run -i/--init with other flags.')
+	print('Run <python3 basic_server.py --init> first')
+	raise SystemExit(1)
+
 # initialize server-client communication
 if args.init:
 	init_comm()
-"""
 
 # get trained models from clients
 if args.get:

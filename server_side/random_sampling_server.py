@@ -4,7 +4,6 @@ import argparse
 import pickle
 import random
 import threading
-from _thread import *
 from socket import *
 from os.path import join, exists
 from aggregate import aggr_params, save_times
@@ -162,8 +161,8 @@ def init_comm(server_port=10800):
 	info_path = join(os.getcwd(),"outputs","client_info.pkl")
 
 	if not exists("outputs"):
-		os.mkdir("outputs")
-		print('Outputs directory created.')
+		print("Weights file does not exist. Cannot run --init/-i flag.")
+		raise SystemExit(1)
 
 	addr_dict = get_dict(info_path)
 
@@ -181,10 +180,11 @@ def init_comm(server_port=10800):
 
 			addr_dict[client_info[0]] = 0
 
-			start_new_thread(selection_thread,(connection,client_info,))
+			client_thread = threading.Thread(target=selection_thread, args=(connection, client_info,))
+			client_thread.start()
 		except:
 			serverSocket.close()
-			print('Socket closed. Server received no connections.')
+			print('Socket closed due to inactivity or error.')
 			break
 
 	with open(info_path, 'wb') as f:
@@ -202,7 +202,7 @@ def selection_thread(connection, client_info):
 	print("Sent info confirmation to client: {client}".format(client=client_info))
 
 	"""
-	# for future use -> send initial server weights
+	# for future use -> initialize new clients with server weights
 	weight_path = join(os.getcwd(),"outputs","final_weights.pkl")
 	send_chunks(connection, weight_path)
 	print("Server sent weights to client: {client}".format(client=client_info))
@@ -298,13 +298,18 @@ def server_send(client_port=12000):
 	addr_dict = get_dict(info_path)
 
 	# iterate through each client address
-	soc = socket(AF_INET, SOCK_STREAM)
 	for ip, sel in addr_dict.items():
 		if sel == 0:
 			continue
 
-		soc.connect((ip, client_port))
-		print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
+		try:
+			soc = socket(AF_INET, SOCK_STREAM)
+			soc.connect((ip, client_port))
+			print("Connected to client: ({ip}, {port})".format(ip=ip, port=client_port))
+		except:
+			print("Client ({ip}, {port}) unavailable.".format(ip=ip, port=client_port))
+			print("Continuing to next client...\n")
+			continue
 
 		# send weights to client in chunks
 		send_chunks(soc, weight_path)
