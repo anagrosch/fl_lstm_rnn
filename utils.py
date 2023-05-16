@@ -112,6 +112,7 @@ def update_params():
 
 	# combine aggregated params with local params
 	for weight in param_dict.keys():
+		tmp_dict[weight], param_dict[weight] = resize_tensor(tmp_dict[weight], param_dict[weight])
 		param_dict[weight] = (param_dict[weight] + tmp_dict[weight])/2
 
 	with open(param_path, 'wb') as f:
@@ -126,6 +127,24 @@ def update_params():
 		param = param_dict[weight]
 
 	save_final(epoch, model, optimizer, loss)
+
+
+def resize_tensor(tensor1, tensor2):
+	"""
+	Function to set two tensors to the same size.
+	Filles smaller tensor (tensor1) with random initializer.
+	"""
+	if tensor1.shape > tensor2.shape: #ensure tensor1 is smaller
+		tensor2, tensor1 = resize_tensor(tensor2, tensor1)
+	elif tensor1.shape < tensor2.shape:
+		if len(tensor2.shape) == 1:
+			tmp = torch.empty(tensor2.shape[0]-tensor1.shape[0])
+			torch.nn.init.uniform_(tmp)
+		else:
+			tmp = torch.empty(tensor2.shape[0]-tensor1.shape[0], tensor2.shape[1])
+			torch.nn.init.xavier_uniform_(tmp)
+		tensor1 = torch.cat((tensor1,tmp),0)
+	return tensor1, tensor2
 
 
 def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time):
