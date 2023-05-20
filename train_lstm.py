@@ -12,6 +12,8 @@ from lstm_model import Model
 from dataset import Dataset
 from utils import SaveBestModel, save_final, fine_tune_model, save_plots, save_params, update_params
 
+AGGR_PERIOD = 0 #increment after each aggregation
+
 def valid_file(filename):
 	"""
 	Function to check that the csv file input is a csv file.
@@ -50,7 +52,7 @@ def train_and_save(model, optimizer, args):
 
 	save_final(args.max_epochs, model, optimizer, criterion)
 	save_params(model)
-	save_plots(train_loss, valid_loss, train_acc, valid_acc, "lstm_rnn", (end_time-start_time)/60)
+	save_plots(train_loss, valid_loss, train_acc, valid_acc, "lstm_rnn", (end_time-start_time)/60, AGGR_PERIOD)
 
 	print('TRAINING COMPLETE')
 	print(f"Time Taken: {round((end_time - start_time)/60, 6)} minutes")
@@ -147,7 +149,7 @@ def predict(dataset, model, optimizer, args):
 parser = argparse.ArgumentParser(prog='TRAIN_LSTM', usage='%(prog)s [options]')
 parser.add_argument('-me', '--max-epochs', type=int, default=32)
 parser.add_argument('-bs', '--batch_size', type=int, default=64)
-parser.add_argument('-bn', '--batch_num', type=int, default=32)
+parser.add_argument('-bn', '--batch_num', type=int, default=64)
 parser.add_argument('-sl', '--sequence-length', type=int, default=4)
 parser.add_argument('-cf', '--csv-file', type=valid_file, default='data/reddit-cleanjokes.csv')
 parser.add_argument('-r', '--round', type=int, default=1)

@@ -13,8 +13,11 @@ A simple lstm rnn model that predicts the rest of the sentence given a number of
 - `train_lstm.py`: Trains model and saves model checkpoints for the final trained model and the
 trained model point with the smallest validation loss
 
-- `utils.py`: Class to save and load the model checkpoints, create training vs. validation loss
-plots, and save the parameters of the best model checkpoint.
+- `utils.py`: Class to save and load the model checkpoints. 
+Create training/validation loss plots, training/validation accuracy plots, and training times
+for different model types plot.
+
+- `prepare_data.py`: Prepares csv data files for dataloader.
 
 ## Usage
 
@@ -28,6 +31,22 @@ is monitored so that the epoch with the lowest validation loss is saved in `/out
 The training and validation loss at each epoch are plot and saved to `/outputs/`.
 
 The model parameters are saved as a Python dictionary in `/outputs/best_model_params.pkl`.
+
+### Prepare Data
+
+Data to be used for training must be in a column titled 'nlp_data'.
+
+To prepare a csv file for training, run the command:
+```
+python3 prepare_data.py <csv_filename>
+```
+You will be asked which column to rename as 'nlp_data'.
+
+### Train/Predict with Model
+
+Run the main model functions with `train_lstm.py`.
+
+Find the command line argument options with `python3 train_lstm.py -h`.
 
 ## Setup
 

@@ -21,26 +21,51 @@ class Dataset(torch.utils.data.Dataset):
 
 	def load_words(self):
 		train_df = pd.read_csv(self.args.csv_file)
-		num_rows = self.get_num_rows(train_df)
-		try:
-			if self.type=='train':
-				text = train_df[(2*(self.args.round-1))*num_rows:(2*self.args.round-1)*num_rows]['Joke'].str.cat(sep=' ')
-			elif self.type=='valid': 
-				text = train_df[(2*self.args.round-1)*num_rows:(2*self.args.round)*num_rows]['Joke'].str.cat(sep=' ')
-			elif self.type=='full':
-				text = train_df[(2*(self.args.round-1))*num_rows:(2*self.args.round)*num_rows]['Joke'].str.cat(sep=' ')
-			else: sys.exit("Error: Invalid dataset type.")
-		except:
-			sys.exit("Error: Round is too high for dataset. Try lower round or a different dataset")
+		lower_bound, middle_bound, upper_bound = self.get_row_bounds(train_df)
+
+		if self.type=='train':
+			text = train_df[lower_bound:middle_bound]['nlp_data'].str.cat(sep=' ')
+		elif self.type=='valid': 
+			text = train_df[middle_bound+1:upper_bound]['nlp_data'].str.cat(sep=' ')
+		elif self.type=='full':
+			text = train_df[lower_bound:upper_bound]['nlp_data'].str.cat(sep=' ')
+		else: sys.exit("Error: Invalid dataset type.")
+
 		return text.split(' ')
 
-	def get_num_rows(self, train_df):
+	def get_row_bounds(self, train_df):
 		row = 0
 		total = 0
-		while total < self.args.batch_size*self.args.batch_num:
-			total += train_df.iloc[row]['Joke'].count(' ') + 1
-			row += 1
-		return row
+		counter = 0
+		limit = self.args.batch_size*self.args.batch_num
+		try:
+			while total < limit and counter < 2*(self.args.round-1):
+				#curr_row = [str(x) for x in train_df.iloc[row]['nlp_data']]
+				total += str(train_df.iloc[row]['nlp_data']).count(' ') + 1
+				row += 1
+				if total >= limit:
+					counter += 1
+					total = 0
+			lower_bound = row
+
+			total = 0
+			while total < limit:
+				total += str(train_df.iloc[row]['nlp_data']).count(' ') + 1
+				row += 1
+			middle_bound = row - 1
+
+			total = 0
+			while total < limit:
+				total += str(train_df.iloc[row]['nlp_data']).count(' ') + 1
+				row += 1
+			upper_bound = row - 1
+
+		except Exception as e:
+			print(e)
+			print("Format csv file with prepare_data.py if not done already.")
+			raise SystemExit(1)
+
+		return lower_bound, middle_bound, upper_bound
 
 	def get_uniq_words(self):
 		word_counts = Counter(self.words)

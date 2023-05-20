@@ -3,7 +3,9 @@ import torch
 import pickle
 import csv
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mp
 from os.path import join, exists, getsize
 from datetime import date
 from lstm_model import Model
@@ -147,7 +149,43 @@ def resize_tensor(tensor1, tensor2):
 	return tensor1, tensor2
 
 
-def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time):
+def save_time_to_csv(csv_file, model_type, time, period):
+	"""
+	Function to save training times and time plot info to csv_file.
+	"""
+	color_dict = {'lstm_rnn': '#baf0f5', 'dp_lstm_rnn': '#e1cff4',
+		      'smc_lstm_rnn': '#a4bda2', 'he_lstm_rnn': '#f5d1cb'}
+	with open(csv_file, 'a', newline='') as f:
+		write = csv.writer(f)
+
+		# add headers if csv file is empty
+		if getsize(csv_file) == 0:
+			write.writerow(["Model Type", "Training Time", "Period", "Color"])
+		write.writerow([model_type, time, period, color_dict[model_type]])
+
+
+def get_csv_data(csv_file):
+	"""
+	Function to get plot data from csv_file.
+	"""
+	df = pd.read_csv(csv_file)
+	x = df['Period']
+	y = df['Training Time']
+	c = df['Color']
+	mt = df['Model Type']
+
+	xr = []
+	for i in range(len(x)):
+		if mt[i] == 'lstm_rnn': xr.append(x[i]-0.03)
+		elif mt[i] == 'dp_lstm_rnn': xr.append(x[i])
+		elif mt[i] == 'smc_lstm_rnn': xr.append(x[i]+0.03)
+		elif mt[i] == 'he_lstm_rnn': xr.append(x[i]+0.06)
+		else: print("{mt} is an invalid model type".format(mt=mt[i]))
+
+	return xr, y, c
+
+
+def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time, period):
 	"""
 	Function to save the loss plots and time plot to disk.
 	"""
@@ -180,21 +218,22 @@ def save_plots(train_loss, valid_loss, train_acc, valid_acc, model_type, time):
 	plt.savefig(acc_file)
 
 	# add training time to csv file
-	with open(csv_file, 'a', newline='') as f:
-		write = csv.writer(f)
-
-		# add headers if csv file is empty
-		if getsize(csv_file) == 0:
-			write.writerow(["Model Type", "Training Time"])
-		write.writerow([model_type, time])
+	save_time_to_csv(csv_file, model_type, time, period)
 
 	# time plot
-	df = pd.read_csv(csv_file)
+	xr, y, c = get_csv_data(csv_file)
 	plt.figure(figsize=(10,7))
-	x = df['Model Type']
-	y = df['Training Time']
-	plt.scatter(x, y, c='#8fb9a1', s=100, alpha=0.8)
-	plt.xlabel('Model Type')
+	plt.scatter(xr, y, c=c, s=100)
+	plt.xticks(np.arange(0, period, step=1))
+	plt.xlabel('Aggregation Period')
 	plt.ylabel('Training Time (min)')
 	plt.title('Training Times for Different Model Types')
-	plt.savefig(time_file)
+
+	# create time plot legend
+	lstm = mp.Patch(color='#baf0f5', label='lstm_rnn')
+	dp = mp.Patch(color='#e1cff4', label='dp_lstm_rnn')
+	smc = mp.Patch(color='#a4bda2', label='smc_lstm_rnn')
+	he = mp.Patch(color='#f5d1cb', label='he_lstm_rnn')
+	plt.legend(bbox_to_anchor=(1.05,1.0), loc='upper left', handles=[lstm,dp,smc,he])
+
+	plt.savefig(time_file, bbox_inches='tight')
