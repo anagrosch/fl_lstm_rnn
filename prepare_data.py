@@ -12,6 +12,8 @@ def select_column(filename):
 	df = pd.read_csv(filename)
 	print("csv columns: {c}".format(c=list(df.columns)))
 	data_col = input("Enter column with data to rename: ")
+	while data_col not in df.columns:
+		data_col = input("Input column does not exist, try again (case-sensitive): ")
 
 	return data_col, df
 	
