@@ -1,10 +1,8 @@
-import csv
 import os
 import pickle
 import shutil
 import torch
-from datetime import date
-from os.path import join, isfile, exists, getsize
+from os.path import join, exists
 
 final_weights = join(os.getcwd(),"outputs","final_weights.pkl")
 
@@ -95,23 +93,5 @@ def resize_tensor(tensor1, tensor2):
 
 		tensor1 = torch.cat((tensor1,tmp),0)
 	return tensor1, tensor2
-
-
-def save_times(get_time=-1, aggr_time=-1, send_time=-1):
-	"""
-	Function to save transfer times to a csv file.
-	Value of -1 means specific function was not applied.
-	"""
-	csv_file = join(os.getcwd(),"outputs","server_times.csv")
-	curr_date = date.today()
-	date_format = curr_date.strftime("%m/%d/%y")
-	
-	with open(csv_file, 'a', newline='') as f:
-		write = csv.writer(f)
-		
-		# add headers if csv file is empty
-		if getsize(csv_file) == 0:
-			write.writerow(["End Date","Get Weights (s)","Aggregate (s)","Redistribute (s)"])
-		write.writerow([date_format, get_time, aggr_time, send_time])
 
 

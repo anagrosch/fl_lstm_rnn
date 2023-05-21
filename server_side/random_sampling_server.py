@@ -6,7 +6,8 @@ import random
 import threading
 from socket import *
 from os.path import join, exists
-from aggregate import aggr_params, save_times
+from aggregate import aggr_params
+from utils import save_times, save_time_plots
 
 SERVER_IP = "127.0.0.1" #change to server's public ip address
 MODEL_DIR = join(os.getcwd(), "client_models")
@@ -368,22 +369,23 @@ if args.get:
 	start_time = time.perf_counter()
 	server_get()
 	get_time = (time.perf_counter() - start_time)/60
-else: get_time = -1
+else: get_time = ''
 
 # aggregate weights
 if args.aggr:
 	start_time = time.perf_counter()
 	aggr_params()
 	aggr_time = (time.perf_counter() - start_time)/60
-else: aggr_time = -1
+else: aggr_time = ''
 
 # send aggregated weights
 if args.send:
 	start_time = time.perf_counter()
 	server_send()
 	send_time = (time.perf_counter() - start_time)/60
-else: send_time = -1
+else: send_time = ''
 
 if (args.get or args.aggr or args.send):
 	save_times(get_time, aggr_time, send_time)
+	save_time_plots()
 
